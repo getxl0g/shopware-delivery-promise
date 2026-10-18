@@ -39,8 +39,8 @@ class AgentDiscoveryBuilderTest extends TestCase
     }
 
     /**
-     * Der Kern: ohne JSON-LD-Ausgabe darf das Manifest die Felder nicht ankündigen — sonst schickt es
-     * Agenten auf eine Suche, die leer ausgeht (der Fall, der in einem Kundenshop aufgefallen ist).
+     * The core: without JSON-LD output the manifest must not announce the fields — otherwise it sends
+     * agents on a search that comes up empty (the case that was noticed in a customer shop).
      */
     public function testManifestPromisesNoFieldsWhenJsonLdDisabled(): void
     {
@@ -49,7 +49,7 @@ class AgentDiscoveryBuilderTest extends TestCase
         self::assertSame([], $m['delivery_intelligence']['signals']);
         self::assertStringNotContainsString('x-xl0g-delivery-date', json_encode($m['delivery_intelligence']['signals']));
         self::assertStringContainsString('switched off', $m['delivery_intelligence']['where']);
-        // Der Rest des Manifests bleibt unverändert nutzbar.
+        // The rest of the manifest remains usable unchanged.
         self::assertSame('https://shop.example/sitemap.xml', $m['delivery_intelligence']['sitemap']);
         self::assertSame('discovery', $m['agentic_commerce']['role']);
     }
@@ -61,13 +61,13 @@ class AgentDiscoveryBuilderTest extends TestCase
         self::assertStringNotContainsString('x-xl0g-delivery-date', $txt);
         self::assertStringNotContainsString('x-xl0g-cutoff-at', $txt);
         self::assertStringContainsString('does not expose', $txt);
-        // Die Sitemap bleibt ein gültiger Hinweis, auch ohne JSON-LD.
+        // The sitemap remains a valid hint, even without JSON-LD.
         self::assertStringContainsString('https://shop.example/sitemap.xml', $txt);
     }
 
     /**
-     * Auch mit eingeschaltetem JSON-LD gilt der Ehrlichkeits-Riegel: Artikel ohne Bestand tragen
-     * bewusst keinen Termin, und der Annahmeschluss steht nur an, solange einer greift.
+     * Even with JSON-LD switched on, the honesty guard applies: products without stock deliberately
+     * carry no date, and the order cutoff is only present while one applies.
      */
     public function testEnabledTextsQualifyTheirOwnPromise(): void
     {

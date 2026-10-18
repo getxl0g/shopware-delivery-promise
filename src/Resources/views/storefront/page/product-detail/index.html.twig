@@ -1,10 +1,10 @@
 {% sw_extends '@Storefront/storefront/page/product-detail/index.html.twig' %}
 
-{# xl0g Lieferversprechen — Widget-Platzhalter + JSON-LD unter dem Kauf-Bereich.
-   • Widget: per JS gefüllt, bleibt versteckt, wenn xl0g nichts liefert (kein kaputtes Widget).
-   • JSON-LD: Schema.org Product/Offer/shippingDetails (Subscriber liefert die Extension).
-   Text = Shopware-Snippets (pro Sales Channel); die ZAHLEN kommen aus xl0g /api/promise?format=data.
-   TODO(Test 6.7): Block-Name gegen die echte PDP-Vorlage verifizieren (ggf. page_product_detail_buy). #}
+{# xl0g Delivery Promise — widget placeholder + JSON-LD below the buy box.
+   • Widget: filled by JS, stays hidden if xl0g delivers nothing (no broken widget).
+   • JSON-LD: Schema.org Product/Offer/shippingDetails (the subscriber provides the extension).
+   Text = Shopware snippets (per sales channel); the NUMBERS come from xl0g /api/promise?format=data.
+   TODO(test 6.7): verify the block name against the real PDP template (possibly page_product_detail_buy). #}
 {% block page_product_detail_buy_container %}
     {{ parent() }}
 

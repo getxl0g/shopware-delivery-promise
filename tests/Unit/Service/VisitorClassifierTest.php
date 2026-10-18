@@ -60,7 +60,7 @@ class VisitorClassifierTest extends TestCase
         self::assertSame(['page_sku' => 'A_1.2/3', 'visitor' => 'browser'], $q);
     }
 
-    /** Die Agentennamen müssen bei xl0g auf der Namensliste stehen — sonst zählt xl0g sie ohne Namen. */
+    /** The agent names must be on xl0g's name list — otherwise xl0g counts them without a name. */
     public function testAgentNamesAreOnXl0gAllowlist(): void
     {
         $xl0g = ['GPTBot', 'ClaudeBot', 'PerplexityBot', 'Google-Extended', 'OAI-SearchBot', 'CCBot', 'Bytespider', 'Amazonbot',

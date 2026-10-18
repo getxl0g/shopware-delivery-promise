@@ -2,11 +2,11 @@ import Plugin from 'src/plugin-system/plugin.class';
 import HttpClient from 'src/service/http-client.service';
 
 /**
- * xl0g Delivery Promise — Storefront-Widget (B2).
+ * xl0g Delivery Promise — storefront widget (B2).
  *
- * Holt die ZAHLEN vom Plugin-Proxy (`frontend.xl0g.delivery_promise` → xl0g /api/promise?format=data),
- * formatiert das Datum lokalisiert, füllt das Snippet-Template ({date} + {countdown}) und lässt den
- * Countdown gegen `cutoff_at` ticken. Prinzip: xl0g = Zahlen, dieses Plugin = Text/Sprache.
+ * Fetches the NUMBERS from the plugin proxy (`frontend.xl0g.delivery_promise` → xl0g /api/promise?format=data),
+ * formats the date localised, fills the snippet template ({date} + {countdown}) and ticks the
+ * countdown against `cutoff_at`. Principle: xl0g = numbers, this plugin = text/language.
  */
 export default class Xl0gDeliveryPromisePlugin extends Plugin {
     init() {
@@ -39,8 +39,8 @@ export default class Xl0gDeliveryPromisePlugin extends Plugin {
         const html = template
             .replace('{date}', `<b class="xl0g-dp-date">${this._escape(this._formatDate(data.promised_date))}</b>`)
             .replace('{countdown}', `<b class="xl0g-dp-countdown" role="timer" aria-live="off">${this._escape(this._formatCountdown(data.cutoff_at))}</b>`);
-        // 0.7.1 (Barrierefreiheit): der Block ist aria-live="polite" und wird einmal angesagt; der Countdown tickt alle 30 s
-        // und ist deshalb ein stiller Timer (role="timer", aria-live="off") — sonst läse ein Screenreader den Satz ständig vor.
+        // 0.7.1 (accessibility): the block is aria-live="polite" and announced once; the countdown ticks every 30 s
+        // and is therefore a silent timer (role="timer", aria-live="off") — otherwise a screen reader would keep reading the sentence out.
 
         this.el.innerHTML = html;
         this.el.hidden = false;

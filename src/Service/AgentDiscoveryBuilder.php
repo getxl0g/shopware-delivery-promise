@@ -3,32 +3,32 @@
 namespace Xl0g\DeliveryPromise\Service;
 
 /**
- * Baut das Agent-Discovery-Manifest (JSON) + die `llms.txt` — die **Discovery-Hälfte** des
- * agentic commerce. Zeigt KI-Einkaufsagenten, wo die (öffentlichen) Liefer-Signale liegen.
+ * Builds the agent discovery manifest (JSON) + the `llms.txt` — the **discovery half** of
+ * agentic commerce. Shows AI shopping agents where the (public) delivery signals are.
  *
- * Beide Methoden brauchen `$jsonLdEnabled` — den tatsächlichen Stand des Schalters
- * `Xl0gDeliveryPromise.config.enableJsonLd` für den ausliefernden Sales Channel. Der Parameter ist
- * bewusst **ohne Default**: das Manifest darf nur ankündigen, was der Shop auch ausliefert. Steht
- * der Schalter aus, fügt {@see StructuredDataSubscriber} kein JSON-LD an — dann darf hier auch kein
- * Feld versprochen werden, sonst schickt das Manifest Agenten auf eine Suche, die leer ausgeht.
+ * Both methods need `$jsonLdEnabled` — the actual state of the switch
+ * `Xl0gDeliveryPromise.config.enableJsonLd` for the serving sales channel. The parameter is
+ * deliberately **without a default**: the manifest may only announce what the shop also delivers. If
+ * the switch is off, {@see StructuredDataSubscriber} adds no JSON-LD — then no field may be
+ * promised here either, otherwise the manifest sends agents on a search that comes up empty.
  *
- * Reine Funktionen (nur `$shopUrl` + `$jsonLdEnabled` rein) → unit-testbar.
+ * Pure functions (only `$shopUrl` + `$jsonLdEnabled` in) → unit-testable.
  */
 class AgentDiscoveryBuilder
 {
     /**
-     * Gilt nur, wenn das JSON-LD überhaupt ausgeliefert wird: Produkte ohne Bestand tragen bewusst
-     * keinen Termin, und `x-xl0g-cutoff-at` steht nur an, solange ein Annahmeschluss greift.
+     * Applies only if the JSON-LD is delivered at all: products without stock deliberately carry
+     * no date, and `x-xl0g-cutoff-at` is only present while an order cutoff applies.
      */
-    private const WO_AKTIV = 'Embedded as JSON-LD (application/ld+json) on product detail pages that '
+    private const WHERE_ENABLED = 'Embedded as JSON-LD (application/ld+json) on product detail pages that '
         . 'carry a delivery date. Products without a delivery date (out of stock, on backorder) '
         . 'deliberately carry none, and x-xl0g-cutoff-at appears only while an order cutoff applies.';
 
-    private const WO_AUS = 'Not exposed as structured data in this shop: JSON-LD output is switched '
+    private const WHERE_DISABLED = 'Not exposed as structured data in this shop: JSON-LD output is switched '
         . 'off. Delivery dates are shown to visitors on the product page only.';
 
     /**
-     * @param bool $jsonLdEnabled Stand von `Xl0gDeliveryPromise.config.enableJsonLd` für den Sales Channel
+     * @param bool $jsonLdEnabled state of `Xl0gDeliveryPromise.config.enableJsonLd` for the sales channel
      *
      * @return array<string, mixed>
      */
@@ -47,7 +47,7 @@ class AgentDiscoveryBuilder
                         'x-xl0g-cutoff-at',
                     ]
                     : [],
-                'where' => $jsonLdEnabled ? self::WO_AKTIV : self::WO_AUS,
+                'where' => $jsonLdEnabled ? self::WHERE_ENABLED : self::WHERE_DISABLED,
                 'sitemap' => $shopUrl . '/sitemap.xml',
             ],
             'agentic_commerce' => [
@@ -58,7 +58,7 @@ class AgentDiscoveryBuilder
     }
 
     /**
-     * @param bool $jsonLdEnabled Stand von `Xl0gDeliveryPromise.config.enableJsonLd` für den Sales Channel
+     * @param bool $jsonLdEnabled state of `Xl0gDeliveryPromise.config.enableJsonLd` for the sales channel
      */
     public function llmsTxt(string $shopUrl, bool $jsonLdEnabled): string
     {

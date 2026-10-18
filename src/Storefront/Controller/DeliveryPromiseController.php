@@ -10,15 +10,15 @@ use Xl0g\DeliveryPromise\Service\VisitorClassifier;
 use Xl0g\DeliveryPromise\Service\Xl0gPromiseClient;
 
 /**
- * Dünner Storefront-Proxy: reicht die xl0g-ZAHLEN als JSON ans Storefront-JS.
+ * Thin storefront proxy: hands the xl0g NUMBERS to the storefront JS as JSON.
  *
- * Die Logik (Config, HTTP, Fehler) liegt im {@see Xl0gPromiseClient}. Der API-Key bleibt
- * server-seitig; ans Storefront gehen nur die (öffentlichen) Liefer-Zahlen. Kein Termin ⇒ 204 ⇒
- * das JS blendet das Widget aus.
+ * The logic (config, HTTP, errors) lives in the {@see Xl0gPromiseClient}. The API key stays
+ * server-side; only the (public) delivery numbers go to the storefront. No date ⇒ 204 ⇒
+ * the JS hides the widget.
  *
- * 0.7.0: Ist „Seitenaufrufe an xl0g melden“ an, reicht das Widget die Artikelnummer mit (`sku`), und der Abruf meldet
- * sie zusammen mit der Art des Besuchers. Hier zählen nur Browser — Agenten und Roboter führen das Widget-JS meist
- * nicht aus und werden beim Erzeugen der Seite gezählt ({@see StructuredDataSubscriber}); so zählt jeder Besuch einmal.
+ * 0.7.0: If "Report page views to xl0g" is on, the widget passes the product number along (`sku`), and the request
+ * reports it together with the kind of visitor. Only browsers count here — agents and robots mostly do not run the
+ * widget JS and are counted when the page is generated ({@see StructuredDataSubscriber}); so every visit counts once.
  */
 #[Route(defaults: ['_routeScope' => ['storefront']])]
 class DeliveryPromiseController extends StorefrontController

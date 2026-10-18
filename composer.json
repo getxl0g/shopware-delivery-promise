@@ -1,6 +1,6 @@
 {
     "name": "xl0g/shopware-delivery-promise",
-    "description": "xl0g Lieferversprechen für Shopware 6: der echte, von xl0g berechnete Liefertermin auf Produktseite und im Checkout, als JSON-LD für Google und KI-Assistenten, mit Einladung an Agenten (llms.txt) und optionaler Meldung der Seitenaufrufe.",
+    "description": "xl0g Delivery Promise for Shopware 6: the real delivery date calculated by xl0g, on the product page and in checkout, as JSON-LD for Google and AI assistants, with an invitation to agents (llms.txt) and optional page-view reporting.",
     "version": "0.7.0",
     "type": "shopware-platform-plugin",
     "license": "MIT",
@@ -9,7 +9,7 @@
         "shopware6",
         "delivery",
         "delivery-date",
-        "lieferzeit",
+        "delivery-time",
         "shipping",
         "xl0g"
     ],

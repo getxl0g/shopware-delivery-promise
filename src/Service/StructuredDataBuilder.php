@@ -3,9 +3,9 @@
 namespace Xl0g\DeliveryPromise\Service;
 
 /**
- * Baut das Schema.org `Product`/`Offer`/`OfferShippingDetails`-JSON-LD aus den Shop-Produktdaten
- * + dem xl0g-{@see PromiseResult}. xl0g-Beitrag: die präzise `shippingDetails` + das exakte Datum
- * (`x-xl0g-delivery-date`). Reine Funktion (keine Abhängigkeiten) → unit-testbar (B6).
+ * Builds the Schema.org `Product`/`Offer`/`OfferShippingDetails` JSON-LD from the shop product data
+ * + the xl0g {@see PromiseResult}. xl0g's contribution: the precise `shippingDetails` + the exact date
+ * (`x-xl0g-delivery-date`). Pure function (no dependencies) → unit-testable (B6).
  */
 class StructuredDataBuilder
 {

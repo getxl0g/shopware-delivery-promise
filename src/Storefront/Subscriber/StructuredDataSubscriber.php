@@ -10,14 +10,14 @@ use Xl0g\DeliveryPromise\Service\VisitorClassifier;
 use Xl0g\DeliveryPromise\Service\Xl0gPromiseClient;
 
 /**
- * B3: Reichert die Produktseite um Schema.org `Product`/`Offer`/`OfferShippingDetails`-JSON-LD an
- * (Google-Rich-Results + KI-Assistenten). Nutzt die xl0g-Zahlen (via {@see Xl0gPromiseClient}) +
- * den {@see StructuredDataBuilder}. Fehlt der Termin / nicht konfiguriert → keine Extension
- * (kein leeres/kaputtes Markup). Das Rendern des `<script>`-Tags macht die Twig-Erweiterung.
+ * B3: Enriches the product page with Schema.org `Product`/`Offer`/`OfferShippingDetails` JSON-LD
+ * (Google rich results + AI assistants). Uses the xl0g numbers (via {@see Xl0gPromiseClient}) +
+ * the {@see StructuredDataBuilder}. If the date is missing / not configured → no extension
+ * (no empty/broken markup). The Twig extension renders the `<script>` tag.
  *
- * 0.7.0: Ist „Seitenaufrufe an xl0g melden“ an, meldet der Subscriber Besuche von KI-Agenten, Suchdiensten und
- * Werkzeugen — sie führen das Widget-JS meist nicht aus. Browser zählt der {@see DeliveryPromiseController}. Seiten aus
- * dem HTTP-Cache des Shops erreichen PHP nicht und zählen hier nicht: für Agenten ist die Zahl eine Untergrenze.
+ * 0.7.0: If "Report page views to xl0g" is on, the subscriber reports visits by AI agents, search engines and
+ * tools — they mostly do not run the widget JS. Browsers are counted by the {@see DeliveryPromiseController}. Pages
+ * from the shop's HTTP cache do not reach PHP and are not counted here: for agents the number is a lower bound.
  */
 class StructuredDataSubscriber implements EventSubscriberInterface
 {
@@ -40,7 +40,7 @@ class StructuredDataSubscriber implements EventSubscriberInterface
         $pageView = $this->pageView($event, $salesChannelId);
         if (!$this->client->isJsonLdEnabled($salesChannelId)) {
             if ($pageView !== []) {
-                // Nur melden: kurzer Abruf, die Antwort wird nicht gebraucht.
+                // Report only: short request, the response is not needed.
                 $this->client->fetch($this->client->shippingMethod($salesChannelId), 'pdp', $salesChannelId, $pageView, 1.0);
             }
 
@@ -72,7 +72,7 @@ class StructuredDataSubscriber implements EventSubscriberInterface
     }
 
     /**
-     * Die Meldung für diesen Besuch — leer, wenn der Schalter aus ist oder ein Browser kommt (den zählt das Widget).
+     * The report for this visit — empty if the switch is off or a browser comes (the widget counts it).
      *
      * @return array<string, string>
      */

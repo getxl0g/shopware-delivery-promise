@@ -1,8 +1,8 @@
 {% sw_extends '@Storefront/storefront/page/checkout/confirm/index.html.twig' %}
 
-{# xl0g Lieferversprechen im Checkout — nur wenn im Plugin aktiviert (enableCheckoutWidget).
-   Gleiches JS-Plugin wie auf der PDP (Selektor [data-xl0g-delivery-promise]); Kontext "checkout".
-   TODO(Test 6.7): Block-Name gegen die echte Confirm-Vorlage verifizieren. #}
+{# xl0g Delivery Promise in checkout — only if enabled in the plugin (enableCheckoutWidget).
+   Same JS plugin as on the PDP (selector [data-xl0g-delivery-promise]); context "checkout".
+   TODO(test 6.7): verify the block name against the real confirm template. #}
 {% block page_checkout_confirm_tos %}
     {% if config('Xl0gDeliveryPromise.config.enableCheckoutWidget') %}
         <div class="xl0g-delivery-promise xl0g-delivery-promise--checkout"

@@ -13,12 +13,12 @@ use Xl0g\DeliveryPromise\Service\Xl0gPromiseClient;
 /**
  * B5: Agent-Discovery — `GET /llms.txt` + `GET /.well-known/xl0g-delivery.json`.
  *
- * Zeigt KI-Einkaufsagenten, wo die (öffentlichen) Liefer-Signale liegen: das Schema.org-JSON-LD auf
- * den Produktseiten. Discovery-Hälfte des agentic commerce; keine Auth nötig (nur öffentliche Hinweise,
- * kein API-Key). Der Inhalt kommt aus dem {@see AgentDiscoveryBuilder}.
+ * Shows AI shopping agents where the (public) delivery signals are: the Schema.org JSON-LD on
+ * the product pages. Discovery half of agentic commerce; no auth needed (public hints only,
+ * no API key). The content comes from the {@see AgentDiscoveryBuilder}.
  *
- * Beide Routen melden den TATSÄCHLICHEN Stand des JSON-LD-Schalters dieses Sales Channels. Steht er
- * aus, kündigt das Manifest keine Felder an, die der Shop nicht ausliefert.
+ * Both routes report the ACTUAL state of this sales channel's JSON-LD switch. If it is
+ * off, the manifest does not announce fields the shop does not deliver.
  */
 #[Route(defaults: ['_routeScope' => ['storefront']])]
 class DiscoveryController extends StorefrontController
@@ -48,9 +48,9 @@ class DiscoveryController extends StorefrontController
     }
 
     /**
-     * Lässt sich der Sales Channel nicht auflösen (die beiden Routen liegen an der Domain-Wurzel),
-     * ist das Attribut null — dann liest {@see Xl0gPromiseClient::isJsonLdEnabled()} den globalen
-     * Wert statt eines Kanal-Werts. Das ist die richtige Antwort für „kein Kanal bekannt", kein Notnagel.
+     * If the sales channel cannot be resolved (the two routes sit at the domain root),
+     * the attribute is null — then {@see Xl0gPromiseClient::isJsonLdEnabled()} reads the global
+     * value instead of a channel value. That is the right answer for "no channel known", not a stopgap.
      */
     private function jsonLdEnabled(Request $request): bool
     {

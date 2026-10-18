@@ -3,14 +3,14 @@
 namespace Xl0g\DeliveryPromise\Service;
 
 /**
- * Ordnet einen Besucher der Produktseite einer von vier Arten zu — im Shop, aus dem User-Agent. An xl0g geht nur das
- * Ergebnis (Art und, bei KI-Agenten, ein Name aus der festen Liste), nie der User-Agent selbst.
+ * Assigns a product page visitor to one of four kinds — in the shop, from the user agent. Only the result goes to
+ * xl0g (the kind and, for AI agents, a name from the fixed list), never the user agent itself.
  *
- * Die Listen folgen xl0g `internal/botnamen` (Stand 2026-10-17), mit einem Unterschied: Googlebot und Applebot zählen
- * hier als Suchdienst („bot“), nicht als KI-Agent — auf einer Produktseite ist ihr Besuch die Suchmaschine.
- * Reihenfolge wie bei xl0g: Name von der Liste → Werkzeug → erkennbarer Roboter → Browser; sonst Roboter.
+ * The lists follow xl0g `internal/botnamen` (as of 2026-10-17), with one difference: Googlebot and Applebot count
+ * here as a search engine ("bot"), not as an AI agent — on a product page their visit is the search engine.
+ * Order as at xl0g: name from the list → tool → recognisable robot → browser; otherwise robot.
  *
- * Reine Funktion → unit-testbar.
+ * Pure function → unit-testable.
  */
 class VisitorClassifier
 {
@@ -26,13 +26,13 @@ class VisitorClassifier
         'DuckAssistBot', 'MistralAI-User',
     ];
 
-    /** Programme und ferngesteuerte Browser (xl0g internal/botnamen werkzeugMuster). */
+    /** Programs and remote-controlled browsers (xl0g internal/botnamen werkzeugMuster = tool patterns). */
     private const TOOLS = [
         'curl/', 'wget/', 'go-http-client', 'python-requests', 'python-urllib', 'aiohttp', 'httpx', 'okhttp',
         'node-fetch', 'axios/', 'headlesschrome', 'phantomjs', 'java/', 'libwww-perl',
     ];
 
-    /** Woran ein automatischer Besucher ohne Namen erkennbar ist (xl0g internal/botnamen generischeMuster). */
+    /** How an automatic visitor without a name can be recognised (xl0g internal/botnamen generischeMuster = generic patterns). */
     private const BOTS = ['bot', 'spider', 'crawl', 'slurp', 'baidu', 'yandex', 'bingbot', 'ahrefs', 'semrush', 'petalbot'];
 
     /**
@@ -64,8 +64,8 @@ class VisitorClassifier
     }
 
     /**
-     * Die Felder für den Abruf bei xl0g (GET /api/promise): page_sku, page_shop, visitor, visitor_agent. Leer, wenn die
-     * Artikelnummer nicht passt — dann meldet das Plugin nichts (xl0g nähme sie ohnehin nicht an).
+     * The fields for the request to xl0g (GET /api/promise): page_sku, page_shop, visitor, visitor_agent. Empty if the
+     * product number does not fit — then the plugin reports nothing (xl0g would not accept it anyway).
      *
      * @return array<string, string>
      */

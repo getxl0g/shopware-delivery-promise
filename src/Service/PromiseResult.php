@@ -3,25 +3,25 @@
 namespace Xl0g\DeliveryPromise\Service;
 
 /**
- * Unveränderliches Wert-Objekt eines xl0g-Promise-Aufrufs — die ZAHLEN (sprachneutral),
- * aus dem JSON von `GET /api/promise?format=data`.
+ * Immutable value object of an xl0g promise call — the NUMBERS (language-neutral),
+ * from the JSON of `GET /api/promise?format=data`.
  */
 final class PromiseResult
 {
     public function __construct(
-        public readonly string $promisedDate,   // ISO-Datum, z. B. "2026-07-15"
+        public readonly string $promisedDate,   // ISO date, e.g. "2026-07-15"
         public readonly ?string $shipDate,
         public readonly ?int $transitDays,
         public readonly ?string $carrier,
-        public readonly ?string $cutoffAt,       // RFC3339 — Anker fürs Countdown-Ticken
-        public readonly ?string $cutoffTime,     // "11:00" — für die Anzeige
+        public readonly ?string $cutoffAt,       // RFC3339 — anchor for the countdown ticking
+        public readonly ?string $cutoffTime,     // "11:00" — for display
         public readonly bool $wasCutoffMissed,
     ) {
     }
 
     /**
-     * Baut aus der xl0g-JSON-Antwort. Gibt null zurück, wenn kein verwertbarer Termin da ist
-     * (der Aufrufer blendet das Widget dann aus — nie ein kaputtes Widget).
+     * Builds from the xl0g JSON response. Returns null if there is no usable date
+     * (the caller then hides the widget — never a broken widget).
      *
      * @param array<string, mixed> $data
      */

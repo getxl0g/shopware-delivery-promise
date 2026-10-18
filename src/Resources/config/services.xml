@@ -11,17 +11,17 @@
         <!-- Service: baut das Schema.org-JSON-LD (reine Funktion, unit-testbar). -->
         <service id="Xl0g\DeliveryPromise\Service\StructuredDataBuilder"/>
 
-        <!-- 0.7.0: ordnet Besucher ein (browser/agent/bot/werkzeug) — der User-Agent verlässt den Shop nie. -->
+        <!-- 0.7.0: classifies visitors (browser/agent/bot/werkzeug = tool) — the user agent never leaves the shop. -->
         <service id="Xl0g\DeliveryPromise\Service\VisitorClassifier"/>
 
-        <!-- Service: baut Agent-Discovery-Manifest + llms.txt (reine Funktion, unit-testbar). -->
+        <!-- Service: builds the agent discovery manifest + llms.txt (pure function, unit-testable). -->
         <service id="Xl0g\DeliveryPromise\Service\AgentDiscoveryBuilder"/>
 
-        <!-- B3: Subscriber, der die PDP um shippingDetails-JSON-LD anreichert.
-             autoconfigure taggt EventSubscriberInterface automatisch. -->
+        <!-- B3: subscriber that enriches the PDP with shippingDetails JSON-LD.
+             autoconfigure tags EventSubscriberInterface automatically. -->
         <service id="Xl0g\DeliveryPromise\Storefront\Subscriber\StructuredDataSubscriber"/>
 
-        <!-- Storefront-Proxy-Controller (dünn; nutzt den Client). setContainer für StorefrontController. -->
+        <!-- Storefront proxy controller (thin; uses the client). setContainer for StorefrontController. -->
         <service id="Xl0g\DeliveryPromise\Storefront\Controller\DeliveryPromiseController" public="true">
             <call method="setContainer">
                 <argument type="service" id="service_container"/>

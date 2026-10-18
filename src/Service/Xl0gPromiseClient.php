@@ -6,13 +6,13 @@ use Shopware\Core\System\SystemConfig\SystemConfigService;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
- * Client für die xl0g-Promise-API.
+ * Client for the xl0g promise API.
  *
- * Kapselt Config-Zugriff, den Aufruf `GET {apiBaseUrl}/promise?format=data` (Auth-Header `X-API-Key`)
- * und robuste Fehlerbehandlung. Der API-Key bleibt **server-seitig** (nie im Browser).
+ * Encapsulates config access, the call `GET {apiBaseUrl}/promise?format=data` (auth header `X-API-Key`)
+ * and robust error handling. The API key stays **server-side** (never in the browser).
  *
- * Prinzip: xl0g liefert die ZAHLEN; Präsentation/Sprache macht das Storefront. Bei fehlender
- * Konfiguration, Timeout, Nicht-200 oder fehlendem Termin ⇒ `null` (Aufrufer blendet das Widget aus).
+ * Principle: xl0g delivers the NUMBERS; presentation/language is the storefront's job. On missing
+ * configuration, timeout, non-200 or missing date ⇒ `null` (the caller hides the widget).
  */
 class Xl0gPromiseClient
 {
@@ -28,9 +28,9 @@ class Xl0gPromiseClient
     }
 
     /**
-     * @param string      $shippingMethod z. B. "standard" (v0: eine repräsentative Versandart)
-     * @param string      $context        "pdp" | "checkout" — steuert die xl0g-Vorlagenwahl
-     * @param string|null $salesChannelId Config ist Sales-Channel-scoped (mehrsprachig/mehrkanalig)
+     * @param string      $shippingMethod e.g. "standard" (v0: one representative shipping method)
+     * @param string      $context        "pdp" | "checkout" — controls the xl0g template choice
+     * @param string|null $salesChannelId config is sales-channel scoped (multilingual/multichannel)
      * @param array<string, string> $pageView  0.7.0: Meldung des Seitenaufrufs ({@see VisitorClassifier::pageViewQuery()}),
      *                                         nur wenn {@see isReportPageViewsEnabled()} — sonst leer
      */
@@ -91,7 +91,7 @@ class Xl0gPromiseClient
         return $v === null ? true : (bool) $v; // Default an
     }
 
-    /** 0.7.0: Seitenaufrufe an xl0g melden (Artikelnummer und Art des Besuchers) — ab Werk aus. */
+    /** 0.7.0: report page views to xl0g (product number and kind of visitor) — off by default. */
     public function isReportPageViewsEnabled(?string $salesChannelId = null): bool
     {
         return (bool) $this->systemConfig->get('Xl0gDeliveryPromise.config.reportPageViews', $salesChannelId);
