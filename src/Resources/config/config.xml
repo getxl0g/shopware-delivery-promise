@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/shopware/shopware/trunk/src/Core/System/SystemConfig/Schema/config.xsd">
+    <card>
+        <title>xl0g Lieferversprechen — Verbindung</title>
+        <title lang="en-GB">xl0g Delivery Promise — Connection</title>
+
+        <input-field type="text">
+            <name>apiBaseUrl</name>
+            <label lang="de-DE">xl0g API-Basis-URL</label>
+            <label lang="en-GB">xl0g API base URL</label>
+            <placeholder>https://xl0g.com/&lt;tenant&gt;/api</placeholder>
+            <helpText lang="de-DE">Die Basis-URL deines xl0g-Tenants (ohne abschließenden Slash).</helpText>
+            <helpText lang="en-GB">Base URL of your xl0g tenant (no trailing slash).</helpText>
+        </input-field>
+
+        <input-field type="password">
+            <name>apiKey</name>
+            <label lang="de-DE">xl0g API-Schlüssel</label>
+            <label lang="en-GB">xl0g API key</label>
+            <helpText lang="de-DE">API-Key mit Berechtigung „promise:read". Wird server-seitig gehalten, nie im Browser.</helpText>
+            <helpText lang="en-GB">API key with the "promise:read" permission. Kept server-side, never exposed to the browser.</helpText>
+        </input-field>
+    </card>
+
+    <card>
+        <title>Anzeige &amp; Verhalten</title>
+        <title lang="en-GB">Display &amp; behaviour</title>
+
+        <input-field type="text">
+            <name>defaultShippingMethod</name>
+            <label lang="de-DE">xl0g-Versandart</label>
+            <label lang="en-GB">xl0g shipping method</label>
+            <defaultValue>standard</defaultValue>
+            <helpText lang="de-DE">Welche xl0g-Versandart abgefragt wird (z. B. „standard"). v0: eine repräsentative Art.</helpText>
+            <helpText lang="en-GB">Which xl0g shipping method to query (e.g. "standard"). v0: one representative method.</helpText>
+        </input-field>
+
+        <input-field type="text">
+            <name>shippingCountry</name>
+            <label lang="de-DE">Ziel-Land (ISO, für JSON-LD)</label>
+            <label lang="en-GB">Destination country (ISO, for JSON-LD)</label>
+            <defaultValue>DE</defaultValue>
+            <helpText lang="de-DE">ISO-Ländercode für die shippingDestination im JSON-LD (z. B. „DE").</helpText>
+            <helpText lang="en-GB">ISO country code for the JSON-LD shippingDestination (e.g. "DE").</helpText>
+        </input-field>
+
+        <input-field type="bool">
+            <name>enableJsonLd</name>
+            <label lang="de-DE">JSON-LD auf der Produktseite ausgeben</label>
+            <label lang="en-GB">Emit JSON-LD on the product page</label>
+            <defaultValue>true</defaultValue>
+            <helpText lang="de-DE">Schema.org shippingDetails für Google-Rich-Results + KI-Assistenten.</helpText>
+            <helpText lang="en-GB">Schema.org shippingDetails for Google rich results + AI assistants.</helpText>
+        </input-field>
+
+        <input-field type="bool">
+            <name>enableCheckoutWidget</name>
+            <label lang="de-DE">Widget auch im Checkout zeigen</label>
+            <label lang="en-GB">Show the widget in checkout too</label>
+            <defaultValue>false</defaultValue>
+            <helpText lang="de-DE">Zeigt das Lieferversprechen zusätzlich auf der Bestellabschluss-Seite.</helpText>
+            <helpText lang="en-GB">Also shows the delivery promise on the checkout confirm page.</helpText>
+        </input-field>
+
+        <input-field type="bool">
+            <name>reportPageViews</name>
+            <label lang="de-DE">Seitenaufrufe an xl0g melden</label>
+            <label lang="en-GB">Report page views to xl0g</label>
+            <defaultValue>false</defaultValue>
+            <helpText lang="de-DE">Meldet je Aufruf einer Produktseite die Artikelnummer und die Art des Besuchers (Mensch, KI-Agent, Suchdienst, Werkzeug) an xl0g — sichtbar in xl0g unter „Produkt-Check für KI → Wer kommt?“. Der User-Agent und die Adresse des Besuchers verlassen den Shop nie.</helpText>
+            <helpText lang="en-GB">Reports, per product page view, the product number and the kind of visitor (person, AI agent, search engine, tool) to xl0g — visible in xl0g under “Product Check for AI → Who visits?”. The visitor’s user agent and address never leave the shop.</helpText>
+        </input-field>
+    </card>
+</config>

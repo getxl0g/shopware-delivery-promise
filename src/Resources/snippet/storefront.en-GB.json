@@ -1,0 +1,9 @@
+{
+    "xl0g": {
+        "deliveryPromise": {
+            "line": "Delivered by {date} — order within the next {countdown}.",
+            "unitHours": "hrs",
+            "unitMinutes": "min"
+        }
+    }
+}

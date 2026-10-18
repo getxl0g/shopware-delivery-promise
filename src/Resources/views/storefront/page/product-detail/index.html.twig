@@ -1,0 +1,27 @@
+{% sw_extends '@Storefront/storefront/page/product-detail/index.html.twig' %}
+
+{# xl0g Lieferversprechen — Widget-Platzhalter + JSON-LD unter dem Kauf-Bereich.
+   • Widget: per JS gefüllt, bleibt versteckt, wenn xl0g nichts liefert (kein kaputtes Widget).
+   • JSON-LD: Schema.org Product/Offer/shippingDetails (Subscriber liefert die Extension).
+   Text = Shopware-Snippets (pro Sales Channel); die ZAHLEN kommen aus xl0g /api/promise?format=data.
+   TODO(Test 6.7): Block-Name gegen die echte PDP-Vorlage verifizieren (ggf. page_product_detail_buy). #}
+{% block page_product_detail_buy_container %}
+    {{ parent() }}
+
+    {% if page.extensions.xl0gShippingDetails %}
+        <script type="application/ld+json">{{ page.extensions.xl0gShippingDetails.get('jsonLd')|raw }}</script>
+    {% endif %}
+
+    <div class="xl0g-delivery-promise"
+         hidden
+         data-xl0g-delivery-promise
+         data-endpoint="{{ path('frontend.xl0g.delivery_promise') }}"
+         data-shipping-method="standard"
+         data-context="pdp"
+         data-sku="{{ page.product.productNumber }}"
+         data-template="{{ 'xl0g.deliveryPromise.line'|trans|e('html_attr') }}"
+         data-unit-hours="{{ 'xl0g.deliveryPromise.unitHours'|trans|e('html_attr') }}"
+         data-unit-minutes="{{ 'xl0g.deliveryPromise.unitMinutes'|trans|e('html_attr') }}"
+         aria-live="polite">
+    </div>
+{% endblock %}

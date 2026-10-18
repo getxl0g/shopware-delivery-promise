@@ -1,0 +1,38 @@
+<?xml version="1.0" ?>
+<container xmlns="http://symfony.com/schema/dic/services"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
+    <services>
+        <defaults autowire="true" autoconfigure="true"/>
+
+        <!-- Service: kapselt Config + HTTP-Aufruf der xl0g-Promise-API (X-API-Key, server-seitig). -->
+        <service id="Xl0g\DeliveryPromise\Service\Xl0gPromiseClient"/>
+
+        <!-- Service: baut das Schema.org-JSON-LD (reine Funktion, unit-testbar). -->
+        <service id="Xl0g\DeliveryPromise\Service\StructuredDataBuilder"/>
+
+        <!-- 0.7.0: ordnet Besucher ein (browser/agent/bot/werkzeug) — der User-Agent verlässt den Shop nie. -->
+        <service id="Xl0g\DeliveryPromise\Service\VisitorClassifier"/>
+
+        <!-- Service: baut Agent-Discovery-Manifest + llms.txt (reine Funktion, unit-testbar). -->
+        <service id="Xl0g\DeliveryPromise\Service\AgentDiscoveryBuilder"/>
+
+        <!-- B3: Subscriber, der die PDP um shippingDetails-JSON-LD anreichert.
+             autoconfigure taggt EventSubscriberInterface automatisch. -->
+        <service id="Xl0g\DeliveryPromise\Storefront\Subscriber\StructuredDataSubscriber"/>
+
+        <!-- Storefront-Proxy-Controller (dünn; nutzt den Client). setContainer für StorefrontController. -->
+        <service id="Xl0g\DeliveryPromise\Storefront\Controller\DeliveryPromiseController" public="true">
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+        </service>
+
+        <!-- B5: Discovery-Controller (llms.txt + /.well-known/xl0g-delivery.json). -->
+        <service id="Xl0g\DeliveryPromise\Storefront\Controller\DiscoveryController" public="true">
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+        </service>
+    </services>
+</container>

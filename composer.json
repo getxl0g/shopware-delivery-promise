@@ -1,0 +1,54 @@
+{
+    "name": "xl0g/shopware-delivery-promise",
+    "description": "xl0g Lieferversprechen für Shopware 6: der echte, von xl0g berechnete Liefertermin auf Produktseite und im Checkout, als JSON-LD für Google und KI-Assistenten, mit Einladung an Agenten (llms.txt) und optionaler Meldung der Seitenaufrufe.",
+    "version": "0.7.0",
+    "type": "shopware-platform-plugin",
+    "license": "MIT",
+    "keywords": [
+        "shopware",
+        "shopware6",
+        "delivery",
+        "delivery-date",
+        "lieferzeit",
+        "shipping",
+        "xl0g"
+    ],
+    "authors": [
+        {
+            "name": "xl0g",
+            "homepage": "https://xl0g.com"
+        }
+    ],
+    "require": {
+        "shopware/core": "~6.7.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^10.5"
+    },
+    "extra": {
+        "shopware-plugin-class": "Xl0g\\DeliveryPromise\\Xl0gDeliveryPromise",
+        "label": {
+            "en-GB": "xl0g Delivery Promise",
+            "de-DE": "xl0g Lieferversprechen"
+        },
+        "description": {
+            "en-GB": "Reliable, precise delivery dates in your storefront — powered by xl0g.",
+            "de-DE": "Verlässliche, präzise Liefertermine im Shop — powered by xl0g."
+        }
+    },
+    "autoload": {
+        "psr-4": {
+            "Xl0g\\DeliveryPromise\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Xl0g\\DeliveryPromise\\Tests\\": "tests/"
+        }
+    },
+    "homepage": "https://github.com/getxl0g/shopware-delivery-promise",
+    "support": {
+        "issues": "https://github.com/getxl0g/shopware-delivery-promise/issues",
+        "source": "https://github.com/getxl0g/shopware-delivery-promise"
+    }
+}
