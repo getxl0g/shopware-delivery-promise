@@ -9,9 +9,9 @@ All notable changes to this plugin. Format: [Keep a Changelog](https://keepachan
   out of manufacturer support, the next plugin version officially drops it.
 - **Accessibility:** the countdown is a silent timer (`role="timer"`, `aria-live="off"`) — before, a screen reader read
   out the whole sentence again every 30 seconds.
-- **`scripts/kompatibilitaet.sh <version>`:** test against a real Shopware instance in Docker (installation, theme,
+- **`scripts/compatibility.sh <version>`:** test against a real Shopware instance in Docker (installation, theme,
   product page with widget, invitation to agents, unit tests).
-- **`scripts/pruefe-oeffentlich.sh`:** before every push, no keys, passwords, tokens or `.env` files in the
+- **`scripts/check-public.sh`:** before every push, no keys, passwords, tokens or `.env` files in the
   repository; optionally a local list of forbidden words.
 
 ## [0.7.0] — 2026-10-17 — Report page views to xl0g; discovery tells the truth
