@@ -1,73 +1,72 @@
-# Betrieb & Good Practice — xl0g Lieferversprechen
+# Operations & good practice — xl0g Delivery Promise
 
-Empfehlungen für die richtige **Einstellung**, **Nutzung** und **Überwachung** im Produktivbetrieb.
+Recommendations for the right **setup**, **use** and **monitoring** in production.
 
-## 1 · Einstellung (Good Practice)
+## 1 · Setup (good practice)
 
-### API-Key: minimal berechtigt
-- Ein **eigener** xl0g-Key nur fürs Plugin, Permission **ausschließlich `promise:read`** (Least Privilege).
-  Keine Admin-/Full-Access-Keys wiederverwenden.
-- **Ein** Key genügt für alle Sales Channels; er bleibt **server-seitig** (nie im Browser).
-- Verdacht auf Leak? Key im xl0g-Dashboard **rotieren**, im Plugin neu eintragen — mehr ist nicht nötig.
+### API key: minimally privileged
+- A **dedicated** xl0g key just for the plugin, permission **exclusively `promise:read`** (least privilege).
+  Do not reuse admin/full-access keys.
+- **One** key is enough for all sales channels; it stays **server-side** (never in the browser).
+- Suspect a leak? **Rotate** the key in the xl0g dashboard, enter the new one in the plugin — nothing more is needed.
 
-### Pro Sales Channel bewusst konfigurieren
-Oben im Config-Dialog den **Kanal wählen**, dann je Kanal:
-- **API-Basis-URL + Key** setzen.
-- **Versandart**: die repräsentative Standard-Versandart des Shops (v0) — sie bestimmt den angezeigten Termin.
-- **Ziel-Land**: der Hauptmarkt des Kanals (fürs JSON-LD `shippingDestination`).
-- **JSON-LD an** (empfohlen): Google-Rich-Results + KI-Assistenten. Nur **aus**, wenn ein anderes Plugin
-  bereits identisches `shippingDetails`-Markup liefert (Doppel-Markup vermeiden).
-- **Checkout-Widget an**, wenn die Termin-Zusage nah am „Kaufen"-Button die Conversion stützen soll.
+### Configure each sales channel deliberately
+At the top of the config dialog **choose the channel**, then per channel:
+- Set **API base URL + key**.
+- **Shipping method**: the shop’s representative standard shipping method (v0) — it determines the displayed date.
+- **Destination country**: the channel’s main market (for the JSON-LD `shippingDestination`).
+- **JSON-LD on** (recommended): Google rich results + AI assistants. Only switch it **off** if another plugin
+  already provides identical `shippingDetails` markup (avoid duplicate markup).
+- **Checkout widget on** if the date promise near the “Buy” button should support conversion.
 
-### Texte
-- Snippets (`xl0g.deliveryPromise.*`) pro Sales Channel/Sprache im Shop-Snippet-Editor an die Marke
-  anpassen. **Platzhalter `{date}` / `{countdown}` nicht entfernen** (sonst fehlt die Zahl).
+### Texts
+- Adapt the snippets (`xl0g.deliveryPromise.*`) per sales channel/language to the brand in the shop’s snippet editor.
+  **Do not remove the placeholders `{date}` / `{countdown}`** (otherwise the number is missing).
 
-## 2 · Nutzung (Good Practice)
-- **Erst 1 Shop vollständig testen**, dann die restlichen mit gleicher Konfiguration ausrollen.
-- Nach jeder Config-Änderung **Storefront-Cache leeren** (Admin → Caches, bzw. `bin/console cache:clear`).
-- **Verifizieren:**
-  - PDP: das Lieferversprechen erscheint unter dem Kauf-Bereich.
-  - JSON-LD: Quelltext enthält `application/ld+json` mit `OfferShippingDetails` → **Googles Rich-Results-Test**.
-  - `https://<shop>/llms.txt` + `/.well-known/xl0g-delivery.json` laden.
-- **Fail-safe by design:** falscher Key, xl0g nicht erreichbar oder kein Termin → das Widget **blendet
-  sich aus** (kein kaputtes Widget, kein blockierter Seitenaufbau). Leeres Widget = Config/Erreichbarkeit
-  prüfen, **kein** Shop-Fehler.
+## 2 · Use (good practice)
+- **Test one shop completely first**, then roll out the rest with the same configuration.
+- After every config change **clear the storefront cache** (admin → Caches, or `bin/console cache:clear`).
+- **Verify:**
+  - PDP: the delivery promise appears below the buy box.
+  - JSON-LD: the source contains `application/ld+json` with `OfferShippingDetails` → **Google’s Rich Results Test**.
+  - Load `https://<shop>/llms.txt` + `/.well-known/xl0g-delivery.json`.
+- **Fail-safe by design:** wrong key, xl0g unreachable or no date → the widget **hides itself** (no broken widget,
+  no blocked page build). An empty widget means check config/reachability, **not** a shop error.
 
-## 3 · Monitoring (Good Practice)
-- **Sichtprüfung**: Widget auf einer echten PDP da? JSON-LD valide (Rich-Results-Test)?
-- **xl0g-API-Gesundheit**: das Plugin hängt an der xl0g-Promise-API. Langsam (>3 s) oder down → Widget
-  blendet sich **still** aus (Timeout 3 s, Fehler geschluckt). Darum die **xl0g-Seite mit überwachen**.
-- **Google Search Console**: `shippingDetails`/Versand-Rich-Results + Struktur-Fehler beobachten.
-- **Shopware-Log**: da das Plugin Fehler bewusst schluckt (fail-safe), zum Debuggen die Antwort von
-  `GET /xl0g/delivery-promise` prüfen — **200 + JSON** = Termin ausgeliefert, **204** = kein Termin/Config.
-- **Kennzahl** „Widget-Trefferquote": grob das Verhältnis 200 vs. 204 auf `/xl0g/delivery-promise`.
-- **Nach Deploys**: schlägt ein Storefront-Build/Deploy *einmal* fehl, ist die Ursache erfahrungsgemäß
-  **transient** (Build-/Cache-Flake) — ein zweiter Anlauf reicht meist; erst dann tiefer schauen.
+## 3 · Monitoring (good practice)
+- **Visual check**: is the widget there on a real PDP? Is the JSON-LD valid (Rich Results Test)?
+- **xl0g API health**: the plugin depends on the xl0g promise API. Slow (>3 s) or down → the widget hides
+  **silently** (timeout 3 s, error swallowed). That is why **the xl0g side should be monitored too**.
+- **Google Search Console**: watch `shippingDetails`/shipping rich results + structure errors.
+- **Shopware log**: since the plugin deliberately swallows errors (fail-safe), to debug check the response of
+  `GET /xl0g/delivery-promise` — **200 + JSON** = date delivered, **204** = no date/config.
+- **Metric** “widget hit rate”: roughly the ratio of 200 vs. 204 on `/xl0g/delivery-promise`.
+- **After deploys**: if a storefront build/deploy fails *once*, the cause is, in experience,
+  **transient** (build/cache flake) — a second attempt usually suffices; only then look deeper.
 
-## 4 · Sicherheit
-- API-Key bleibt **server-seitig** (nie im JS/HTML) — das Plugin erzwingt das.
-- Ausgeliefert werden nur die **öffentlichen** Liefer-Zahlen + das JSON-LD.
-- `/llms.txt` + `/.well-known/` geben nur **Hinweise** (keine Auth, keine Kundendaten).
+## 4 · Security
+- The API key stays **server-side** (never in JS/HTML) — the plugin enforces this.
+- Only the **public** delivery numbers + the JSON-LD are delivered.
+- `/llms.txt` + `/.well-known/` only give **hints** (no auth, no customer data).
 
 ---
-Konfig-Details: [CONFIGURATION.md](CONFIGURATION.md) · Aufbau: [ARCHITECTURE.md](ARCHITECTURE.md) ·
-Entwicklung/Tests: [DEVELOPMENT.md](DEVELOPMENT.md) · Rollout: [INSTALLATION.md](INSTALLATION.md).
+Config details: [CONFIGURATION.md](CONFIGURATION.md) · Architecture: [ARCHITECTURE.md](ARCHITECTURE.md) ·
+Development/tests: [DEVELOPMENT.md](DEVELOPMENT.md) · Rollout: [INSTALLATION.md](INSTALLATION.md).
 
-## 5 · Updates und Auslieferung
+## 5 · Updates and delivery
 
-**Bezugsquelle:** dieses Repository. Jede Version ist ein Tag (`v0.7.0` …) mit einem Release und dem ZIP
-`Xl0gDeliveryPromise-<Version>.zip` (gebaut mit `git archive --prefix=Xl0gDeliveryPromise/`).
+**Source:** this repository. Every version is a tag (`v0.7.0` …) with a release and the ZIP
+`Xl0gDeliveryPromise-<version>.zip` (built with `git archive --prefix=Xl0gDeliveryPromise/`).
 
-**Empfohlen: Composer.** Der Shop bindet `"xl0g/shopware-delivery-promise": "^0.7"` aus diesem Repository ein (siehe
-[INSTALLATION.md](INSTALLATION.md)). Jede kompatible Version kommt mit dem nächsten Deploy des Shops — über denselben
-Weg, auf dem der Shop ohnehin ausgeliefert wird, mit `plugin:update`, Storefront-Build und Cache-Leeren. Wer mehr
-Automatik will, lässt Renovate oder Dependabot je Release einen Merge-Request öffnen.
+**Recommended: Composer.** The shop pulls in `"xl0g/shopware-delivery-promise": "^0.7"` from this repository (see
+[INSTALLATION.md](INSTALLATION.md)). Every compatible version arrives with the shop’s next deploy — through the same
+route the shop is delivered by anyway, with `plugin:update`, storefront build and cache clear. Anyone who wants more
+automation has Renovate or Dependabot open a merge request per release.
 
-**Bewusst kein Selbst-Update im Shop:**
-- **Es geht nicht überall:** Shops auf Shopware PaaS oder platform.sh haben zur Laufzeit ein schreibgeschütztes
-  Dateisystem; Code ändert sich dort nur über den Build.
-- **Lieferketten-Risiko:** Code, der sich selbst aus dem Netz nachlädt und ausführt, macht aus einem kompromittierten
-  Konto einen Zugang zu jedem Shop. Das lehnen Sicherheitsprüfungen bei Shops zu Recht ab.
-- **Ein Update ist mehr als Dateien:** Migrationen, `plugin:update`, Storefront-Build, Cache — das gehört in die
-  Pipeline des Shops, mit deren Test.
+**Deliberately no self-update in the shop:**
+- **It does not work everywhere:** shops on Shopware PaaS or platform.sh have a read-only file system at runtime;
+  code only changes there through the build.
+- **Supply-chain risk:** code that reloads itself from the network and runs it turns a compromised account into
+  access to every shop. Shops’ security reviews rightly reject that.
+- **An update is more than files:** migrations, `plugin:update`, storefront build, cache — that belongs in the
+  shop’s pipeline, with its tests.

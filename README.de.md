@@ -66,11 +66,13 @@ Berechtigung `promise:read` — [xl0g.com](https://xl0g.com). Einrichtung Schrit
 
 ## Dokumentation
 
+Die Dokumente unter `docs/` und der Changelog sind auf Englisch.
+
 - [docs/INSTALLATION.md](docs/INSTALLATION.md) — Installation, API-Schlüssel, Einrichtung je Verkaufskanal, Prüfen
 - [docs/CONFIGURATION.md](docs/CONFIGURATION.md) — alle Einstellungen und Texte
 - [docs/OPERATIONS.md](docs/OPERATIONS.md) — Betrieb, Überwachung, Sicherheit, Updates
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — Aufbau, Datenfluss
-- [docs/UCP_UEBERBLICK.md](docs/UCP_UEBERBLICK.md) — KI-Assistenten und maschinenlesbare Produktdaten für Einsteiger
+- [docs/UCP_OVERVIEW.md](docs/UCP_OVERVIEW.md) — KI-Assistenten und maschinenlesbare Produktdaten für Einsteiger
 - [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) — Entwicklung und Tests
 - [CHANGELOG.md](CHANGELOG.md) — Versionen
 

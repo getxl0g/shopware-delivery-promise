@@ -1,114 +1,113 @@
 # Changelog
 
-Alle nennenswerten Änderungen an diesem Plugin. Format: [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
+All notable changes to this plugin. Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased] — 0.7.1
-- **README auf Englisch** (`README.md`) und **auf Deutsch** (`README.de.md`); kein fester Beispielsatz mit Datum mehr —
-  ein Datum im Beispiel veraltet.
-- **Unterstützte Shopware-Versionen** als Regel: jede Linie, die noch Releases von Shopware bekommt; fällt eine Linie aus
-  dem Herstellersupport, lässt die nächste Plugin-Version sie offiziell fallen.
-- **Barrierefreiheit:** der Countdown ist ein stiller Timer (`role="timer"`, `aria-live="off"`) — vorher las ein
-  Screenreader den ganzen Satz alle 30 Sekunden neu vor.
-- **`scripts/kompatibilitaet.sh <version>`:** Test gegen eine echte Shopware-Instanz in Docker (Installation, Theme,
-  Produktseite mit Widget, Einladung an Agenten, Unit-Tests).
-- **`scripts/pruefe-oeffentlich.sh`:** vor jedem Push keine Schlüssel, Passwörter, Tokens oder `.env`-Dateien im
-  Repository; optional eine lokale Liste verbotener Wörter.
+- **README in English** (`README.md`) and **in German** (`README.de.md`); no fixed example sentence with a date any
+  more — a date in an example goes stale.
+- **Supported Shopware versions** as a rule: every line that still receives releases from Shopware; when a line goes
+  out of manufacturer support, the next plugin version officially drops it.
+- **Accessibility:** the countdown is a silent timer (`role="timer"`, `aria-live="off"`) — before, a screen reader read
+  out the whole sentence again every 30 seconds.
+- **`scripts/kompatibilitaet.sh <version>`:** test against a real Shopware instance in Docker (installation, theme,
+  product page with widget, invitation to agents, unit tests).
+- **`scripts/pruefe-oeffentlich.sh`:** before every push, no keys, passwords, tokens or `.env` files in the
+  repository; optionally a local list of forbidden words.
 
-## [0.7.0] — 2026-10-17 — Seitenaufrufe an xl0g melden; Discovery sagt die Wahrheit
-- **Neu: „Seitenaufrufe an xl0g melden“** (Plugin-Einstellung `reportPageViews`, **ab Werk aus**). Ist sie an, meldet
-  das Plugin je Aufruf einer Produktseite die Artikelnummer, den Host des Shops und die **Art des Besuchers**
-  (`browser`, `agent`, `bot`, `werkzeug`; bei KI-Agenten ein Name aus der festen Liste) mit dem ohnehin laufenden Abruf
-  `GET /api/promise`. xl0g zeigt es unter „Produkt-Check für KI → Wer kommt?“ (ab xl0g 1.5.297).
-- **Der User-Agent verlässt den Shop nie.** `VisitorClassifier` ordnet im Shop ein (Listen wie xl0g
-  `internal/botnamen`, Stand 2026-10-17; Googlebot und Applebot zählen als Suchdienst).
-- **Jeder Besuch zählt einmal:** Browser meldet das Widget (`sku` geht jetzt mit an den Proxy), Agenten, Suchdienste
-  und Werkzeuge meldet der Seiten-Subscriber beim Erzeugen der Seite — sie führen das Widget-JS meist nicht aus. Steht
-  JSON-LD aus, macht der Subscriber dafür einen kurzen Abruf (1 s) nur zum Melden. Seiten aus dem HTTP-Cache des Shops
-  erreichen PHP nicht: für Agenten ist die Zahl eine Untergrenze.
-- Tests: `VisitorClassifierTest` (Einordnung, keine Spur des User-Agents in der Meldung, ungültige Artikelnummern,
-  Agentennamen stehen auf der Liste von xl0g).
+## [0.7.0] — 2026-10-17 — Report page views to xl0g; discovery tells the truth
+- **New: “Report page views to xl0g”** (plugin setting `reportPageViews`, **off by default**). When on, the plugin
+  reports, for each product page view, the product number, the shop host and the **kind of visitor**
+  (`browser`, `agent`, `bot`, `werkzeug` = tool; for AI agents a name from a fixed list) along with the request that
+  runs anyway, `GET /api/promise`. xl0g shows it under “Product Check for AI → Who visits?” (from xl0g 1.5.297).
+- **The user agent never leaves the shop.** `VisitorClassifier` classifies in the shop (lists like xl0g
+  `internal/botnamen`, as of 2026-10-17; Googlebot and Applebot count as search engines).
+- **Every visit counts once:** browsers are reported by the widget (`sku` is now sent to the proxy as well); agents,
+  search engines and tools are reported by the page subscriber when the page is generated — they mostly do not run the
+  widget JS. If JSON-LD is off, the subscriber makes a short request (1 s) just for reporting. Pages served from the
+  shop’s HTTP cache do not reach PHP: for agents the number is a lower bound.
+- Tests: `VisitorClassifierTest` (classification, no trace of the user agent in the report, invalid product numbers,
+  agent names are on xl0g’s list).
 
-### Discovery sagt die Wahrheit
-- **Discovery sagt jetzt die Wahrheit.** `llms.txt` und `/.well-known/xl0g-delivery.json` nannten die
-  Felder `x-xl0g-delivery-date` und `x-xl0g-cutoff-at` **bedingungslos** — auch in Shops, in denen
-  `enableJsonLd` aus steht und der `StructuredDataSubscriber` folglich gar kein JSON-LD anfügt. Agenten
-  wurden damit auf eine Suche geschickt, die leer ausgeht. Aufgefallen live in einem Kundenshop: llms.txt
-  fordert zum Lesen der beiden Felder auf, die Produktseite enthält sie 0×.
-- `AgentDiscoveryBuilder::manifest()` und `::llmsTxt()` nehmen den Schalterstand als **Pflichtparameter**
-  (kein Default — ein vergessener Aufruf soll auffallen, nicht stillschweigend wieder überversprechen).
-  Steht der Schalter aus: `signals: []` und ein Satz, der das benennt, statt Feldnamen.
-- Auch mit eingeschaltetem JSON-LD sind die Texte jetzt genau: Artikel ohne Termin (kein Bestand,
-  Nachlieferung) tragen bewusst keinen — und `x-xl0g-cutoff-at` steht nur an, solange ein Annahmeschluss
-  greift. Beides stand vorher als unbedingte Zusage („on each product detail page") da.
-- `DiscoveryController` liest den Sales-Channel wie der `DeliveryPromiseController`
-  (`sw-sales-channel-id`) und reicht `isJsonLdEnabled()` durch — zwei Shops auf derselben Instanz
-  bekommen damit unterschiedliche, jeweils zutreffende Manifeste.
-- Tests: drei neue Fälle in `AgentDiscoveryBuilderTest` (Schalter aus → keine Feldnamen in Manifest und
-  llms.txt; Schalter an → die Einschränkungen stehen im Text). Gegenprobe gefahren: gegen die alte
-  Fassung schlagen genau diese drei fehl.
+### Discovery tells the truth
+- **Discovery now tells the truth.** `llms.txt` and `/.well-known/xl0g-delivery.json` named the fields
+  `x-xl0g-delivery-date` and `x-xl0g-cutoff-at` **unconditionally** — even in shops where `enableJsonLd` is off and the
+  `StructuredDataSubscriber` therefore adds no JSON-LD at all. Agents were sent on a search that comes up empty.
+  Noticed live in a customer shop: llms.txt asks to read the two fields, the product page contains them 0 times.
+- `AgentDiscoveryBuilder::manifest()` and `::llmsTxt()` take the switch state as a **required parameter**
+  (no default — a forgotten call should be noticed, not silently over-promise again).
+  With the switch off: `signals: []` and a sentence that says so, instead of field names.
+- Even with JSON-LD on, the texts are now exact: products without a date (out of stock, backorder) deliberately carry
+  none — and `x-xl0g-cutoff-at` is only present while an order cutoff applies. Both used to read as an unconditional
+  promise (“on each product detail page”).
+- `DiscoveryController` reads the sales channel like the `DeliveryPromiseController`
+  (`sw-sales-channel-id`) and passes `isJsonLdEnabled()` through — two shops on the same instance
+  therefore get different manifests, each accurate.
+- Tests: three new cases in `AgentDiscoveryBuilderTest` (switch off → no field names in manifest and
+  llms.txt; switch on → the restrictions are in the text). Counter-test run: against the old
+  version exactly these three fail.
 
-## [0.6.1] — 2026-07-10 — Politur
-- Storefront-JS: Countdown-Timer wird sauber gestoppt (Cleanup vor Neustart + Stopp, wenn das Element
-  aus dem DOM fällt) — kein Timer-Leak bei Re-Renders/Offcanvas.
-- `.gitignore` um `.phpunit.cache/` ergänzt (PHPUnit-10-Cache-Verzeichnis).
-- Doc-Block der Plugin-Basisklasse: veraltete Phasenliste korrigiert (B3–B6 aktuell).
+## [0.6.1] — 2026-07-10 — Polish
+- Storefront JS: the countdown timer is stopped cleanly (cleanup before restart + stop when the element
+  falls out of the DOM) — no timer leak on re-renders/offcanvas.
+- `.gitignore` extended with `.phpunit.cache/` (PHPUnit 10 cache directory).
+- Doc block of the plugin base class: outdated phase list corrected (B3–B6 current).
 
-## [0.6.0] — 2026-07-10 — B6: Tests + Doku + Release-Reife
-- **PHPUnit-Unit-Tests** (`tests/Unit/Service/`) für die reinen Funktionen: `PromiseResult::fromArray`,
-  `StructuredDataBuilder::build`, `AgentDiscoveryBuilder` — abhängigkeitsfrei, ohne Kernel lauffähig.
+## [0.6.0] — 2026-07-10 — B6: tests + docs + release readiness
+- **PHPUnit unit tests** (`tests/Unit/Service/`) for the pure functions: `PromiseResult::fromArray`,
+  `StructuredDataBuilder::build`, `AgentDiscoveryBuilder` — dependency-free, runnable without a kernel.
   `phpunit.xml.dist` + `require-dev phpunit/phpunit ^10.5` + `autoload-dev`.
-- **Doku:** `docs/CONFIGURATION.md` (alle Felder + Snippets pro Sales Channel) + `docs/DEVELOPMENT.md`
-  (Setup, Storefront-JS, Tests, Struktur, offene 6.7-Testpunkte). README-Feinschliff (Doku-/Test-Sektion).
-- Hinweis: `vendor/bin/phpunit` läuft in Shopware-Dev/CI (lokal hier kein `vendor/`).
-- Damit ist das Plugin-Paket **B1–B6 feature-komplett** — offen bleibt nur der Live-Test gegen echte 6.7.
+- **Docs:** `docs/CONFIGURATION.md` (all fields + snippets per sales channel) + `docs/DEVELOPMENT.md`
+  (setup, storefront JS, tests, structure, open 6.7 test points). README polish (docs/tests section).
+- Note: `vendor/bin/phpunit` runs in Shopware dev/CI (no `vendor/` locally here).
+- With that the plugin package is **B1–B6 feature-complete** — only the live test against a real 6.7 remains open.
 
-## [0.5.0] — 2026-07-10 — B5: Agent-Discovery-Manifest (agentic commerce)
-- **`GET /llms.txt`** + **`GET /.well-known/xl0g-delivery.json`**: zeigen KI-Einkaufsagenten, wo die
-  öffentlichen Liefer-Signale liegen (Schema.org-JSON-LD auf den Produktseiten) + verweisen auf die
-  Sitemap. Keine Auth nötig — reine öffentliche Discovery-Hinweise.
-- **AgentDiscoveryBuilder** (reine, unit-testbare Funktion) baut Manifest + llms.txt aus der Shop-URL.
-- Besetzt bewusst die **Discovery-Hälfte** des agentic commerce; Transaktion/Zahlung bleibt Shop +
-  reifende Protokolle (OpenAI/Stripe ACP, Google AP2).
-- ⚠️ Test gegen echte 6.7: Storefront-Route `/.well-known/xl0g-delivery.json` matcht (kein
-  Webserver-/Shopware-Konflikt); `/llms.txt` am Domain-Root erreichbar.
+## [0.5.0] — 2026-07-10 — B5: agent discovery manifest (agentic commerce)
+- **`GET /llms.txt`** + **`GET /.well-known/xl0g-delivery.json`**: show AI shopping agents where the
+  public delivery signals are (Schema.org JSON-LD on the product pages) + point to the
+  sitemap. No auth needed — purely public discovery hints.
+- **AgentDiscoveryBuilder** (pure, unit-testable function) builds manifest + llms.txt from the shop URL.
+- Deliberately occupies the **discovery half** of agentic commerce; transaction/payment stays with the shop +
+  maturing protocols (OpenAI/Stripe ACP, Google AP2).
+- ⚠️ Test against real 6.7: the storefront route `/.well-known/xl0g-delivery.json` matches (no
+  web server/Shopware conflict); `/llms.txt` reachable at the domain root.
 
-## [0.4.0] — 2026-07-10 — B4: Admin-Config + Checkout-Placement
-- **Erweiterte Konfiguration** (Karte „Anzeige & Verhalten"): xl0g-Versandart, Ziel-Land (ISO, fürs
-  JSON-LD), JSON-LD an/aus, Checkout-Widget an/aus — alles Sales-Channel-scoped (pro Kanal/Sprache).
-- **Config → Verhalten verdrahtet:** `Xl0gPromiseClient` bekommt Config-Getter (`shippingMethod`,
-  `shippingCountry`, `isJsonLdEnabled`, `isCheckoutWidgetEnabled`); Subscriber + Controller nutzen sie
-  statt fest verdrahtetem „standard"/„DE".
-- **Checkout-Placement:** Widget optional auf der Bestellabschluss-Seite (`data-context="checkout"`,
-  gleiches JS-Plugin) — per Toggle, Default aus.
-- **Per Sales Channel:** Texte kommen aus dem nativen Snippet-System (im Admin unter Einstellungen →
-  Snippets pro Sales Channel überschreibbar) — keine Übersetzungen im xl0g-Backend.
-- ⚠️ Test gegen echte 6.7: Confirm-Block-Name (`page_checkout_confirm_tos`) verifizieren.
+## [0.4.0] — 2026-07-10 — B4: admin config + checkout placement
+- **Extended configuration** (card “Display & behaviour”): xl0g shipping method, destination country (ISO, for
+  JSON-LD), JSON-LD on/off, checkout widget on/off — all sales-channel scoped (per channel/language).
+- **Config → behaviour wired up:** `Xl0gPromiseClient` gets config getters (`shippingMethod`,
+  `shippingCountry`, `isJsonLdEnabled`, `isCheckoutWidgetEnabled`); subscriber + controller use them
+  instead of a hard-wired “standard”/“DE”.
+- **Checkout placement:** widget optionally on the order confirmation page (`data-context="checkout"`,
+  same JS plugin) — via toggle, default off.
+- **Per sales channel:** texts come from the native snippet system (overridable per sales channel in the admin under
+  Settings → Snippets) — no translations in the xl0g backend.
+- ⚠️ Test against real 6.7: verify the confirm block name (`page_checkout_confirm_tos`).
 
-## [0.3.0] — 2026-07-10 — B3: JSON-LD (shippingDetails) + Struktur
-- **JSON-LD:** `StructuredDataSubscriber` hängt auf der Produktseite (`ProductPageLoadedEvent`) ein
-  Schema.org `Product`/`Offer`/`OfferShippingDetails`-JSON-LD an — Google-Rich-Results + KI-Assistenten.
-  `StructuredDataBuilder` (reine, unit-testbare Funktion) baut es aus Shop-Produktdaten + xl0g-Zahlen.
-- xl0g-Beitrag im Markup: präzise `shippingDetails` + exaktes Datum (`x-xl0g-delivery-date`) — der
-  Verlässlichkeits-Differenzierer, den generische „2–4 Werktage" nicht haben.
-- **Struktur:** API-Logik aus dem Controller in `Service/Xl0gPromiseClient` + DTO `PromiseResult`
-  gezogen (dünner Controller). xl0g-Logo als `plugin.png`. Neu: `docs/ARCHITECTURE.md`.
-- Robust: kein Termin / nicht konfiguriert → keine Extension, kein `<script>` (kein leeres Markup).
-- ⚠️ Test gegen echte 6.7: `getTranslation('name')`/`getCalculatedPrice()` gegen die reale
-  SalesChannelProductEntity verifizieren; Googles Rich-Results-Test gegenprüfen.
+## [0.3.0] — 2026-07-10 — B3: JSON-LD (shippingDetails) + structure
+- **JSON-LD:** `StructuredDataSubscriber` attaches a Schema.org `Product`/`Offer`/`OfferShippingDetails` JSON-LD to the
+  product page (`ProductPageLoadedEvent`) — Google rich results + AI assistants.
+  `StructuredDataBuilder` (pure, unit-testable function) builds it from shop product data + xl0g numbers.
+- xl0g’s contribution to the markup: precise `shippingDetails` + exact date (`x-xl0g-delivery-date`) — the
+  reliability differentiator that generic “2–4 business days” lack.
+- **Structure:** API logic moved out of the controller into `Service/Xl0gPromiseClient` + DTO `PromiseResult`
+  (thin controller). xl0g logo as `plugin.png`. New: `docs/ARCHITECTURE.md`.
+- Robust: no date / not configured → no extension, no `<script>` (no empty markup).
+- ⚠️ Test against real 6.7: verify `getTranslation('name')`/`getCalculatedPrice()` against the real
+  SalesChannelProductEntity; cross-check with Google’s Rich Results Test.
 
-## [0.2.0] — 2026-07-10 — B2: Storefront-Widget (PDP)
-- **Storefront-Controller** (`/xl0g/delivery-promise`) als server-seitiger Proxy zur xl0g-Promise-API
-  (`?format=data`, Header `X-API-Key`) — der API-Key bleibt server-seitig, nie im Browser.
-- **PDP-Twig-Block + JS-Plugin:** holt die Zahlen, formatiert das Datum lokalisiert, füllt das
-  **Snippet-Template** (`{date}` / `{countdown}`) und lässt den Countdown gegen `cutoff_at` ticken.
-- **Snippets DE/EN** (`storefront.*.json`) — Text pro Sales Channel (B4 baut die Admin-Editierbarkeit aus).
-- **Minimal-Config** (API-Basis-URL + API-Key) unter Einstellungen → Plugins.
-- Robust: nicht konfiguriert / Fehler / kein Termin → Widget bleibt versteckt (kein kaputtes Widget).
-- ⚠️ **Braucht Test gegen echte Shopware 6.7**: Twig-Block-Name verifizieren, Storefront-JS
-  bauen (`bin/build-storefront.sh`). Der Termin ist v0 versandart-basiert (per-SKU = Track-A-Folge).
+## [0.2.0] — 2026-07-10 — B2: storefront widget (PDP)
+- **Storefront controller** (`/xl0g/delivery-promise`) as a server-side proxy to the xl0g promise API
+  (`?format=data`, header `X-API-Key`) — the API key stays server-side, never in the browser.
+- **PDP Twig block + JS plugin:** fetches the numbers, formats the date localised, fills the
+  **snippet template** (`{date}` / `{countdown}`) and ticks the countdown against `cutoff_at`.
+- **Snippets DE/EN** (`storefront.*.json`) — text per sales channel (B4 builds out admin editability).
+- **Minimal config** (API base URL + API key) under Settings → Plugins.
+- Robust: not configured / error / no date → widget stays hidden (no broken widget).
+- ⚠️ **Needs a test against real Shopware 6.7**: verify the Twig block name, build the storefront JS
+  (`bin/build-storefront.sh`). The date is v0 shipping-method based (per-SKU = Track A follow-up).
 
-## [0.1.0] — 2026-07-10 — B1: Scaffold
-- Lauffähiges Shopware-6-Plugin-Gerüst: `composer.json` (Typ `shopware-platform-plugin`,
-  Namespace `Xl0g\DeliveryPromise`), Plugin-Basisklasse, leere `services.xml`, MIT-Lizenz, README.
-- Noch KEINE Storefront-Funktion — die kommt mit B2 (Widget) / B3 (JSON-LD) / B4 (Config + Snippets).
-- Ziel-Version: **Shopware 6.7** (`shopware/core: ~6.7.0`) — die heute aktuelle Linie (6.7.12.1).
+## [0.1.0] — 2026-07-10 — B1: scaffold
+- Runnable Shopware 6 plugin skeleton: `composer.json` (type `shopware-platform-plugin`,
+  namespace `Xl0g\DeliveryPromise`), plugin base class, empty `services.xml`, MIT licence, README.
+- Still NO storefront function — that comes with B2 (widget) / B3 (JSON-LD) / B4 (config + snippets).
+- Target version: **Shopware 6.7** (`shopware/core: ~6.7.0`) — the current line today (6.7.12.1).

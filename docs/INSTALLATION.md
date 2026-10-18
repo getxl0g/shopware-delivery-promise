@@ -1,35 +1,35 @@
-# Installation und Einrichtung — xl0g Lieferversprechen
+# Installation and setup — xl0g Delivery Promise
 
-## Was das Plugin tut
+## What the plugin does
 
-Es zeigt auf der Produktseite den von xl0g berechneten **Liefertermin mit Countdown bis zum Bestellschluss** und legt
-den Termin als **JSON-LD** (Schema.org `OfferShippingDetails`) für Google und KI-Assistenten ab. Die Zahlen kommen aus
-der xl0g-API, Text und Sprache macht das Plugin je Verkaufskanal.
+On the product page it shows the **delivery date calculated by xl0g, with a countdown to the order cutoff**, and stores
+the date as **JSON-LD** (Schema.org `OfferShippingDetails`) for Google and AI assistants. The numbers come from
+the xl0g API; text and language are handled by the plugin per sales channel.
 
 ---
 
-## 1 · API-Schlüssel bei xl0g anlegen
+## 1 · Create an API key at xl0g
 
-Einmalig im xl0g-Dashboard unter **Einstellungen → API-Schlüssel → „Neuen Schlüssel anlegen“**:
+Once, in the xl0g dashboard under **Settings → API keys → “Create new key”**:
 
-| Feld | Wert |
+| Field | Value |
 |---|---|
-| **Name** | z. B. `shopware-lieferversprechen` |
-| **Berechtigung** | `promise:read` — nur Lesen des Liefertermins; mehr braucht das Plugin nicht |
+| **Name** | e.g. `shopware-delivery-promise` |
+| **Permission** | `promise:read` — read-only access to the delivery date; the plugin needs nothing more |
 
-Mehrere Shops desselben xl0g-Zugangs können denselben Schlüssel verwenden.
+Several shops of the same xl0g account can use the same key.
 
-**API-Basis-URL:** `https://xl0g.com/<mandant>/api` — `<mandant>` ist das Kürzel aus der Adresszeile eures
-xl0g-Dashboards, ohne abschließenden Schrägstrich.
+**API base URL:** `https://xl0g.com/<tenant>/api` — `<tenant>` is the short name from the address bar of your
+xl0g dashboard, without a trailing slash.
 
-> Der Schlüssel ist ein Zugangsschlüssel: wie ein Passwort behandeln, nicht ins Git, nicht in öffentliche Kanäle. Das
-> Plugin hält ihn serverseitig und gibt ihn nie an den Browser.
+> The key is an access key: treat it like a password, keep it out of Git and public channels. The
+> plugin keeps it server-side and never hands it to the browser.
 
 ---
 
-## 2 · Plugin installieren
+## 2 · Install the plugin
 
-**Über Composer (empfohlen):**
+**Via Composer (recommended):**
 
 ```sh
 composer config repositories.xl0g vcs https://github.com/getxl0g/shopware-delivery-promise
@@ -40,50 +40,50 @@ bin/build-storefront.sh
 bin/console cache:clear
 ```
 
-Bei Shops auf Shopware PaaS oder platform.sh gehören diese Schritte in den Build: `composer.json` und `composer.lock`
-committen, deployen; `plugin:install` einmalig, danach bei jedem Update `bin/console plugin:update Xl0gDeliveryPromise`.
+For shops on Shopware PaaS or platform.sh these steps belong in the build: commit `composer.json` and `composer.lock`,
+deploy; `plugin:install` once, then `bin/console plugin:update Xl0gDeliveryPromise` with every update.
 
-**Als ZIP:** `Xl0gDeliveryPromise-<Version>.zip` von
-[Releases](https://github.com/getxl0g/shopware-delivery-promise/releases) im Admin unter **Erweiterungen → Meine
-Erweiterungen → Erweiterung hochladen** hochladen, installieren, aktivieren; danach Storefront bauen und Cache leeren.
+**As a ZIP:** upload `Xl0gDeliveryPromise-<version>.zip` from
+[Releases](https://github.com/getxl0g/shopware-delivery-promise/releases) in the admin under **Extensions → My
+extensions → Upload extension**, install, activate; then build the storefront and clear the cache.
 
-## 3 · Je Verkaufskanal einrichten
+## 3 · Set up per sales channel
 
-Admin → **Einstellungen → Erweiterungen → xl0g Lieferversprechen**, oben den **Verkaufskanal** wählen:
+Admin → **Settings → Extensions → xl0g Delivery Promise**, choose the **sales channel** at the top:
 
-- **xl0g API-Basis-URL** und **xl0g API-Schlüssel** aus Schritt 1
-- **Anzeige & Verhalten:** Versandart (`standard`), Ziel-Land (`DE`), JSON-LD (an), Checkout-Widget nach Wunsch,
-  „Seitenaufrufe an xl0g melden“ nach Wunsch (aus)
+- **xl0g API base URL** and **xl0g API key** from step 1
+- **Display & behaviour:** shipping method (`standard`), destination country (`DE`), JSON-LD (on), checkout widget as
+  you wish, “Report page views to xl0g” as you wish (off)
 
-Die **Texte** (z. B. „Geliefert bis {date} — bestellen Sie in den nächsten {countdown}.“) sind je Verkaufskanal unter
-**Einstellungen → Snippets** anpassbar; Details in [CONFIGURATION.md](CONFIGURATION.md).
+The **texts** (e.g. “Delivered by {date} — order within the next {countdown}.”) can be adjusted per sales channel under
+**Settings → Snippets**; details in [CONFIGURATION.md](CONFIGURATION.md).
 
-## 4 · Prüfen
+## 4 · Verify
 
-- **Produktseite:** unter dem Kauf-Bereich steht „Geliefert bis … — bestellen Sie in den nächsten …“.
-- **JSON-LD:** im Seitenquelltext ein `<script type="application/ld+json">` mit `OfferShippingDetails` und
-  `x-xl0g-delivery-date`; mit dem Rich-Results-Test von Google gegenprüfen.
-- **Einladung an Agenten:** `https://<shop>/llms.txt` und `https://<shop>/.well-known/xl0g-delivery.json` laden. Die
-  Felder `x-xl0g-*` stehen dort nur, wenn JSON-LD eingeschaltet ist.
-- **Seitenaufrufe** (falls eingeschaltet): nach einigen Aufrufen stehen in xl0g unter „Produkt-Check für KI → Wer
-  kommt?“ Zahlen bei „Produktseiten im Shop“.
+- **Product page:** below the buy box it reads “Delivered by … — order within the next …”.
+- **JSON-LD:** in the page source a `<script type="application/ld+json">` with `OfferShippingDetails` and
+  `x-xl0g-delivery-date`; cross-check with Google’s Rich Results Test.
+- **Invitation to agents:** load `https://<shop>/llms.txt` and `https://<shop>/.well-known/xl0g-delivery.json`. The
+  `x-xl0g-*` fields are only listed there if JSON-LD is switched on.
+- **Page views** (if switched on): after a few views, numbers appear in xl0g under “Product Check for AI → Who
+  visits?” at “Product pages in the shop”.
 
-Zeigt das Widget nichts, stimmen meist URL oder Schlüssel nicht, oder für den Artikel liegt (noch) kein Termin vor —
-das Plugin blendet sich dann bewusst aus.
+If the widget shows nothing, usually the URL or key is wrong, or there is (as yet) no date for the product —
+the plugin then deliberately hides itself.
 
-## 5 · Vor dem breiten Einsatz
+## 5 · Before wide use
 
-Gegen die echte Shopware-Instanz einmal prüfen, bevor alle Kanäle umgestellt werden:
+Check once against the real Shopware instance before all channels are switched over:
 
-1. Erscheint das Widget an der richtigen Stelle? (Twig-Blöcke `page_product_detail_buy_container`,
-   `page_checkout_confirm_tos` — ein eigenes Theme kann sie überschreiben.)
-2. Trägt das JSON-LD echte Werte (Name, Preis, Verfügbarkeit)?
-3. Antworten `/.well-known/xl0g-delivery.json` und `/llms.txt`?
-4. Ist der Rich-Results-Test von Google grün?
+1. Does the widget appear in the right place? (Twig blocks `page_product_detail_buy_container`,
+   `page_checkout_confirm_tos` — a custom theme can override them.)
+2. Does the JSON-LD carry real values (name, price, availability)?
+3. Do `/.well-known/xl0g-delivery.json` and `/llms.txt` respond?
+4. Is Google’s Rich Results Test green?
 
-Empfehlung: erst einen Verkaufskanal vollständig prüfen, dann die übrigen mit derselben Einrichtung.
+Recommendation: check one sales channel completely first, then roll the rest over with the same setup.
 
 ---
 
-**Aufbau:** [ARCHITECTURE.md](ARCHITECTURE.md) · **Einstellungen:** [CONFIGURATION.md](CONFIGURATION.md) ·
-**Betrieb:** [OPERATIONS.md](OPERATIONS.md) · **Entwicklung:** [DEVELOPMENT.md](DEVELOPMENT.md)
+**Architecture:** [ARCHITECTURE.md](ARCHITECTURE.md) · **Settings:** [CONFIGURATION.md](CONFIGURATION.md) ·
+**Operations:** [OPERATIONS.md](OPERATIONS.md) · **Development:** [DEVELOPMENT.md](DEVELOPMENT.md)

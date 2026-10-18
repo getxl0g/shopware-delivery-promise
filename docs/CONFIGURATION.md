@@ -1,76 +1,76 @@
-# Konfiguration — xl0g Lieferversprechen
+# Configuration — xl0g Delivery Promise
 
-Alle Einstellungen unter **Einstellungen → Erweiterungen → xl0g Lieferversprechen** — oben lässt sich
-der **Sales Channel** wählen, für den die Werte gelten (jeder Kanal/Sprache eigene Werte).
+All settings under **Settings → Extensions → xl0g Delivery Promise** — at the top you choose the
+**sales channel** the values apply to (each channel/language has its own values).
 
-## Karte „Verbindung"
+## Card “xl0g Delivery Promise — Connection”
 
-| Feld | Pflicht | Default | Bedeutung |
+| Field | Required | Default | Meaning |
 |---|---|---|---|
-| **xl0g API-Basis-URL** | ja | — | Basis-URL deines xl0g-Tenants, ohne abschließenden Slash, z. B. `https://xl0g.com/<tenant>/api`. |
-| **xl0g API-Schlüssel** | ja | — | API-Key mit Berechtigung `promise:read`. Wird **server-seitig** gehalten, nie im Browser. |
+| **xl0g API base URL** | yes | — | Base URL of your xl0g tenant, without a trailing slash, e.g. `https://xl0g.com/<tenant>/api`. |
+| **xl0g API key** | yes | — | API key with the `promise:read` permission. Kept **server-side**, never in the browser. |
 
-Fehlt eines der beiden Felder, zeigt das Plugin **nichts** — kein kaputtes Widget, kein JSON-LD.
+If either field is missing, the plugin shows **nothing** — no broken widget, no JSON-LD.
 
-## Karte „Anzeige & Verhalten"
+## Card “Display & behaviour”
 
-| Feld | Default | Bedeutung |
+| Field | Default | Meaning |
 |---|---|---|
-| **xl0g-Versandart** | `standard` | Welche Versandart bei xl0g abgefragt wird. v0: eine repräsentative Art (per-SKU folgt als Track-A-Ausbau). |
-| **Ziel-Land (ISO)** | `DE` | Ländercode für die `shippingDestination` im JSON-LD. |
-| **JSON-LD auf der Produktseite** | an | Schema.org `shippingDetails` (Google-Rich-Results + KI-Agenten). Steuert **auch** `llms.txt` und `/.well-known/xl0g-delivery.json`: steht der Schalter aus, kündigen beide keine `x-xl0g-*`-Felder mehr an — siehe unten. |
-| **Widget im Checkout** | aus | Zeigt das Lieferversprechen zusätzlich auf der Bestellabschluss-Seite. |
-| **Seitenaufrufe an xl0g melden** (ab 0.7.0) | aus | Meldet je Produktseite Artikelnummer, Shop und Art des Besuchers (Mensch, KI-Agent, Suchdienst, Werkzeug) an xl0g; sichtbar unter „Produkt-Check für KI → Wer kommt?“. Kein User-Agent, keine Adresse — siehe unten. |
+| **xl0g shipping method** | `standard` | Which shipping method is queried at xl0g. v0: one representative method (per-SKU follows as a Track A extension). |
+| **Destination country (ISO, for JSON-LD)** | `DE` | Country code for the `shippingDestination` in the JSON-LD. |
+| **Emit JSON-LD on the product page** | on | Schema.org `shippingDetails` (Google rich results + AI agents). **Also** controls `llms.txt` and `/.well-known/xl0g-delivery.json`: with the switch off, neither announces `x-xl0g-*` fields any more — see below. |
+| **Show the widget in checkout too** | off | Shows the delivery promise on the order confirmation page as well. |
+| **Report page views to xl0g** (from 0.7.0) | off | Reports, per product page, the product number, shop and kind of visitor (person, AI agent, search engine, tool) to xl0g; visible under “Product Check for AI → Who visits?”. No user agent, no address — see below. |
 
-### Der JSON-LD-Schalter wirkt auf zwei Ebenen
+### The JSON-LD switch works on two levels
 
-Der Schalter ist **pro Sales Channel** gesetzt (`Xl0gDeliveryPromise.config.enableJsonLd`). Er entscheidet
-nicht nur, ob die Produktseite JSON-LD trägt, sondern auch, was `llms.txt` und das Discovery-Manifest
-Agenten **ankündigen**:
+The switch is set **per sales channel** (`Xl0gDeliveryPromise.config.enableJsonLd`). It decides
+not only whether the product page carries JSON-LD, but also what `llms.txt` and the discovery manifest
+**announce** to agents:
 
-| Schalter | Produktseite | `llms.txt` + Manifest |
+| Switch | Product page | `llms.txt` + manifest |
 |---|---|---|
-| **an** | `Product`/`Offer`/`OfferShippingDetails` mit `x-xl0g-delivery-date`, dazu `x-xl0g-cutoff-at`, solange ein Annahmeschluss greift | nennen beide Felder und sagen dazu, dass Artikel ohne Termin bewusst keinen tragen |
-| **aus** | kein JSON-LD vom Plugin | nennen **keine** Feldnamen, sondern sagen, dass dieser Shop die Termine nicht als strukturierte Daten führt |
+| **on** | `Product`/`Offer`/`OfferShippingDetails` with `x-xl0g-delivery-date`, plus `x-xl0g-cutoff-at` while an order cutoff applies | name both fields and add that products without a date deliberately carry none |
+| **off** | no JSON-LD from the plugin | name **no** field names, but say that this shop does not provide the dates as structured data |
 
-Beides gehört zusammen: ein Manifest, das Felder verspricht, die der Shop nicht ausliefert, schickt
-Agenten auf eine Suche, die leer ausgeht — und die fallen dann auf die Spanne zurück, die xl0g ablöst.
+The two belong together: a manifest that promises fields the shop does not deliver sends
+agents on a search that comes up empty — and they then fall back on the range that xl0g replaces.
 
-> **Prüfen, ob der Schalter in einem Shop steht:** `curl -s https://<shop>/.well-known/xl0g-delivery.json`
-> — stehen unter `delivery_intelligence.signals` die beiden `x-xl0g-*`-Felder, ist er an; ist die Liste
-> leer, ist er aus. Dann auf einer Produktseite gegenprüfen: `curl -s <PDP-URL> | grep -c x-xl0g`.
+> **Checking whether the switch is on in a shop:** `curl -s https://<shop>/.well-known/xl0g-delivery.json`
+> — if the two `x-xl0g-*` fields are under `delivery_intelligence.signals`, it is on; if the list
+> is empty, it is off. Then cross-check on a product page: `curl -s <PDP-URL> | grep -c x-xl0g`.
 
-### Seitenaufrufe an xl0g melden (ab 0.7.0)
+### Report page views to xl0g (from 0.7.0)
 
-Mit dem Schalter sieht der Shop in xl0g, **welche Produktseiten** aufgerufen werden und **von wem** — Menschen,
-KI-Agenten (namentlich: GPTBot, ChatGPT-User, ClaudeBot, PerplexityBot …), Suchdienste oder Werkzeuge.
+With the switch on, the shop sees in xl0g **which product pages** are viewed and **by whom** — people,
+AI agents (by name: GPTBot, ChatGPT-User, ClaudeBot, PerplexityBot …), search engines or tools.
 
-| Was geht an xl0g | Was nicht |
+| What goes to xl0g | What does not |
 |---|---|
-| Artikelnummer, Host des Shops, Art des Besuchers, bei KI-Agenten der Name aus der festen Liste | User-Agent, IP-Adresse, Cookies, Sitzung, Warenkorb |
+| Product number, shop host, kind of visitor, for AI agents the name from the fixed list | User agent, IP address, cookies, session, cart |
 
-- **Wo gezählt wird:** Browser über das Widget (der Abruf läuft ohnehin), alle anderen beim Erzeugen der Produktseite.
-  Jeder Besuch zählt einmal.
-- **Untergrenze bei Agenten:** Seiten, die der Shop aus seinem HTTP-Cache ausliefert, erreichen das Plugin nicht.
-- **Datenschutz:** keine Personendaten. Ob der Hinweis in der Datenschutzerklärung des Shops ergänzt wird, entscheidet
-  der Shop-Betreiber.
+- **Where it is counted:** browsers via the widget (the request runs anyway), everyone else when the product page is
+  generated. Every visit counts once.
+- **Lower bound for agents:** pages the shop serves from its HTTP cache do not reach the plugin.
+- **Privacy:** no personal data. Whether the notice is added to the shop’s privacy policy is for the shop operator
+  to decide.
 
-## Texte anpassen (pro Sales Channel)
+## Adjusting texts (per sales channel)
 
-Die angezeigten Texte sind **Shopware-Snippets** — im Admin unter **Einstellungen → Snippets** pro
-Sales Channel überschreibbar, ganz ohne Code:
+The displayed texts are **Shopware snippets** — overridable per sales channel in the admin under
+**Settings → Snippets**, entirely without code:
 
-| Snippet-Key | Default (DE) | Platzhalter |
+| Snippet key | Default (EN) | Placeholders |
 |---|---|---|
-| `xl0g.deliveryPromise.line` | „Geliefert bis {date} — bestellen Sie in den nächsten {countdown}." | `{date}`, `{countdown}` |
-| `xl0g.deliveryPromise.unitHours` | „Std." | — |
-| `xl0g.deliveryPromise.unitMinutes` | „Min." | — |
+| `xl0g.deliveryPromise.line` | “Delivered by {date} — order within the next {countdown}.” | `{date}`, `{countdown}` |
+| `xl0g.deliveryPromise.unitHours` | “hrs” | — |
+| `xl0g.deliveryPromise.unitMinutes` | “min” | — |
 
-`{date}` wird lokalisiert gerendert (Wochentag, Tag und Monat in der Sprache des Verkaufskanals), `{countdown}` tickt live gegen den
-xl0g-Cutoff. Prinzip: **die Zahlen kommen von xl0g, der Text lebt hier** — so passt die Sprache nativ
-zu deinem mehrsprachigen Shop.
+`{date}` is rendered localised (weekday, day and month in the language of the sales channel), `{countdown}` ticks live against the
+xl0g cutoff. Principle: **the numbers come from xl0g, the text lives here** — so the language fits
+your multilingual shop natively. The German defaults ship in `storefront.de-DE.json`.
 
-## Woher kommt der API-Key?
+## Where does the API key come from?
 
-Aus deinem xl0g-Tenant (Dashboard → API-Zugänge). Du brauchst noch einen Zugang?
+From your xl0g tenant (dashboard → API access). Do you still need access?
 → [xl0g.com](https://xl0g.com)

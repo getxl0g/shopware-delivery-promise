@@ -1,8 +1,8 @@
-# Entwicklung — xl0g Lieferversprechen
+# Development — xl0g Delivery Promise
 
 ## Setup
 
-Das Plugin gehört nach `custom/plugins/Xl0gDeliveryPromise` einer Shopware-6.7-Installation.
+The plugin belongs in `custom/plugins/Xl0gDeliveryPromise` of a Shopware 6.7 installation.
 
 ```sh
 bin/console plugin:refresh
@@ -10,48 +10,48 @@ bin/console plugin:install --activate Xl0gDeliveryPromise
 bin/console cache:clear
 ```
 
-## Storefront-JS bauen
+## Building the storefront JS
 
-Das Widget-JS unter `Resources/app/storefront/src` muss kompiliert werden:
+The widget JS under `Resources/app/storefront/src` has to be compiled:
 
 ```sh
-bin/build-storefront.sh          # einmalig; bin/watch-storefront.sh beim Entwickeln
+bin/build-storefront.sh          # once; bin/watch-storefront.sh while developing
 ```
 
 ## Tests
 
-Reine Unit-Tests (kein Shopware-Kernel nötig) für die Service-Schicht:
+Pure unit tests (no Shopware kernel needed) for the service layer:
 
 ```sh
-composer install                 # zieht phpunit/phpunit (require-dev)
-vendor/bin/phpunit               # nutzt phpunit.xml.dist
+composer install                 # pulls phpunit/phpunit (require-dev)
+vendor/bin/phpunit               # uses phpunit.xml.dist
 ```
 
-Abgedeckt: `PromiseResult::fromArray`, `StructuredDataBuilder::build`, `AgentDiscoveryBuilder`.
-Diese Klassen sind bewusst abhängigkeitsfrei gehalten, damit sie **ohne Kernel** laufen.
+Covered: `PromiseResult::fromArray`, `StructuredDataBuilder::build`, `AgentDiscoveryBuilder`.
+These classes are deliberately kept dependency-free so that they run **without a kernel**.
 
-## Struktur
+## Structure
 
-Details in [ARCHITECTURE.md](ARCHITECTURE.md). Kurz:
+Details in [ARCHITECTURE.md](ARCHITECTURE.md). In short:
 
-| Ordner | Inhalt |
+| Folder | Contents |
 |---|---|
-| `Service/` | Logik: API-Client (`Xl0gPromiseClient`), JSON-LD-Builder, Discovery-Builder, DTO. Dünn, testbar. |
-| `Storefront/Controller/` | Dünne Endpunkte: Promise-Proxy + Discovery (llms.txt / well-known). |
-| `Storefront/Subscriber/` | Hängt das JSON-LD an die Produktseite. |
-| `Resources/` | Config, Routes, Services, Twig, Storefront-JS, Snippets, Logo. |
+| `Service/` | Logic: API client (`Xl0gPromiseClient`), JSON-LD builder, discovery builder, DTO. Thin, testable. |
+| `Storefront/Controller/` | Thin endpoints: promise proxy + discovery (llms.txt / well-known). |
+| `Storefront/Subscriber/` | Attaches the JSON-LD to the product page. |
+| `Resources/` | Config, routes, services, Twig, storefront JS, snippets, logo. |
 | `tests/Unit/` | PHPUnit. |
 
-## Konventionen
+## Conventions
 
-- **xl0g = Zahlen, Shop = Sprache.** Keine Storefront-Texte im xl0g-Backend.
-- **API-Key server-seitig.** Nie im JS/Browser.
-- **Robust ausblenden.** Nicht konfiguriert / Fehler / kein Termin → Widget & JSON-LD bleiben weg.
-- **Additiv.** Twig via `sw_extends` + Block-Append, nie ein Kern-Template überschreiben.
+- **xl0g = numbers, shop = language.** No storefront texts in the xl0g backend.
+- **API key server-side.** Never in JS/browser.
+- **Hide robustly.** Not configured / error / no date → widget & JSON-LD stay away.
+- **Additive.** Twig via `sw_extends` + block append, never override a core template.
 
-## Offene Testpunkte gegen echte 6.7 (vor dem Release)
+## Open test points against real 6.7 (before the release)
 
-- Twig-Block-Namen verifizieren (PDP: `page_product_detail_buy_container`, Checkout: `page_checkout_confirm_tos`).
-- `getTranslation('name')` / `getCalculatedPrice()` gegen die reale `SalesChannelProductEntity`.
-- Routen `/.well-known/xl0g-delivery.json` + `/llms.txt` matchen (kein Webserver-Konflikt).
-- Googles Rich-Results-Test über eine echte PDP laufen lassen.
+- Verify the Twig block names (PDP: `page_product_detail_buy_container`, checkout: `page_checkout_confirm_tos`).
+- `getTranslation('name')` / `getCalculatedPrice()` against the real `SalesChannelProductEntity`.
+- Routes `/.well-known/xl0g-delivery.json` + `/llms.txt` match (no web server conflict).
+- Run Google’s Rich Results Test over a real PDP.

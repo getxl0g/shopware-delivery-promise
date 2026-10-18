@@ -61,7 +61,7 @@ bin/console cache:clear
 activate; then build the storefront and clear the cache.
 
 Requirements: a Shopware version from the list above and an xl0g account with an API key holding the `promise:read`
-permission — [xl0g.com](https://xl0g.com). Step-by-step setup (German): [docs/INSTALLATION.md](docs/INSTALLATION.md).
+permission — [xl0g.com](https://xl0g.com). Step-by-step setup: [docs/INSTALLATION.md](docs/INSTALLATION.md).
 
 ## Tests
 

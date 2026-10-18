@@ -1,70 +1,70 @@
-# Architektur — xl0g Lieferversprechen (Shopware 6 Plugin)
+# Architecture — xl0g Delivery Promise (Shopware 6 plugin)
 
-## Leitprinzip: xl0g = Zahlen, Shop = Sprache
+## Guiding principle: xl0g = numbers, shop = language
 
-xl0g liefert die **deterministischen Zahlen** (Liefertermin, Cutoff, Transit) sprachneutral über
-`GET /api/promise?format=data`. **Text + Übersetzung macht dieses Plugin — pro Shopware Sales Channel**,
-über das native Snippet-System. So bleibt xl0g reiner Daten-Lieferant (keine Storefront-Übersetzungen
-im Backend), und die Sprache passt nativ zum mehrsprachigen Shop.
+xl0g delivers the **deterministic numbers** (delivery date, cutoff, transit) in a language-neutral form via
+`GET /api/promise?format=data`. **Text + translation is done by this plugin — per Shopware sales channel**,
+through the native snippet system. That keeps xl0g a pure data supplier (no storefront translations
+in the backend), and the language fits the multilingual shop natively.
 
-## Schichten
+## Layers
 
-| Schicht | Ort | Aufgabe |
+| Layer | Location | Job |
 |---|---|---|
-| **Service** | `Service/Xl0gPromiseClient` | Kapselt Config, HTTP-Aufruf (`X-API-Key`), Fehlerbehandlung → `PromiseResult` \| `null` |
-| **DTO** | `Service/PromiseResult` | Unveränderliches Wert-Objekt der Zahlen (aus der xl0g-JSON) |
-| **Controller** | `Storefront/Controller/DeliveryPromiseController` | Dünner Proxy: reicht die Zahlen als JSON ans Storefront-JS (Key bleibt server-seitig) |
-| **Subscriber** | `Storefront/Subscriber/StructuredDataSubscriber` *(B3)* | `shippingDetails`-JSON-LD auf der PDP (Google/LLMs) |
-| **Discovery** | `Storefront/Controller/DiscoveryController` + `Service/AgentDiscoveryBuilder` *(B5)* | `/llms.txt` + `/.well-known/`-Manifest für KI-Agenten |
-| **Storefront** | `Resources/views` + `Resources/app/storefront` | Twig-Block (Platzhalter) + JS-Plugin (Zahlen holen, Snippet-Template füllen, Countdown) |
-| **Snippets** | `Resources/snippet/storefront.*.json` | Text-Vorlagen pro Sprache/Sales Channel (`{date}` / `{countdown}`) |
-| **Config** | `Resources/config/config.xml` | Admin-Konfiguration (API-URL, Key; *B4* erweitert um Mapping + per-Channel) |
+| **Service** | `Service/Xl0gPromiseClient` | Encapsulates config, HTTP call (`X-API-Key`), error handling → `PromiseResult` \| `null` |
+| **DTO** | `Service/PromiseResult` | Immutable value object of the numbers (from the xl0g JSON) |
+| **Controller** | `Storefront/Controller/DeliveryPromiseController` | Thin proxy: hands the numbers to the storefront JS as JSON (key stays server-side) |
+| **Subscriber** | `Storefront/Subscriber/StructuredDataSubscriber` *(B3)* | `shippingDetails` JSON-LD on the PDP (Google/LLMs) |
+| **Discovery** | `Storefront/Controller/DiscoveryController` + `Service/AgentDiscoveryBuilder` *(B5)* | `/llms.txt` + `/.well-known/` manifest for AI agents |
+| **Storefront** | `Resources/views` + `Resources/app/storefront` | Twig block (placeholder) + JS plugin (fetch numbers, fill snippet template, countdown) |
+| **Snippets** | `Resources/snippet/storefront.*.json` | Text templates per language/sales channel (`{date}` / `{countdown}`) |
+| **Config** | `Resources/config/config.xml` | Admin configuration (API URL, key; *B4* extends it with mapping + per channel) |
 
-## Datenfluss (PDP-Widget)
+## Data flow (PDP widget)
 
 ```
 Storefront (PDP)
- └─ Twig-Block: <div data-xl0g-delivery-promise data-template="{{ snippet }}">
-      └─ JS-Plugin  →  GET /xl0g/delivery-promise            (Plugin-Route)
+ └─ Twig block: <div data-xl0g-delivery-promise data-template="{{ snippet }}">
+      └─ JS plugin  →  GET /xl0g/delivery-promise            (plugin route)
            └─ DeliveryPromiseController → Xl0gPromiseClient
-                └─ GET {apiBaseUrl}/promise?format=data       (Header X-API-Key, server-seitig)
-                     └─ xl0g Promise-Engine
-      ◄── JSON (Zahlen)  →  JS füllt {date}/{countdown} ins Snippet-Template + Live-Countdown
+                └─ GET {apiBaseUrl}/promise?format=data       (header X-API-Key, server-side)
+                     └─ xl0g promise engine
+      ◄── JSON (numbers)  →  JS fills {date}/{countdown} into the snippet template + live countdown
 ```
 
-## Robustheit
+## Robustness
 
-Nicht konfiguriert / Fehler / kein Termin ⇒ `null`/`204` ⇒ Widget bleibt **versteckt**. Nie ein
-kaputtes Widget, nie ein blockierter Seitenaufbau (HTTP-Timeout 3 s, jeder Fehler wird geschluckt).
+Not configured / error / no date ⇒ `null`/`204` ⇒ the widget stays **hidden**. Never a
+broken widget, never a blocked page build (HTTP timeout 3 s, every error is swallowed).
 
-## Sicherheit
+## Security
 
-Der **API-Key bleibt server-seitig** (im `Xl0gPromiseClient`, nie im JS/Browser). Der Storefront-Proxy
-gibt nur die öffentlichen Liefer-Zahlen aus.
+The **API key stays server-side** (in the `Xl0gPromiseClient`, never in JS/browser). The storefront proxy
+only outputs the public delivery numbers.
 
-## Agentic Commerce
+## Agentic commerce
 
-Das Plugin besetzt die **Discovery-Hälfte** (Produkte + verlässlicher Termin, maschinenlesbar) — der
-Input, den KI-Einkaufsagenten für „bis wann lieferbar?" brauchen. Die Transaktion/Zahlung bleibt
-Shopware + die reifenden Protokolle (OpenAI/Stripe ACP, Google AP2). *B5* liefert das
-Agent-Discovery-Manifest (`/.well-known/xl0g-delivery.json` + `/llms.txt`).
+The plugin occupies the **discovery half** (products + a reliable date, machine-readable) — the
+input AI shopping agents need for “when can it be delivered?”. Transaction/payment stays with
+Shopware + the maturing protocols (OpenAI/Stripe ACP, Google AP2). *B5* delivers the
+agent discovery manifest (`/.well-known/xl0g-delivery.json` + `/llms.txt`).
 
-## Verzeichnisstruktur
+## Directory structure
 
 ```
 src/
-  Xl0gDeliveryPromise.php              Plugin-Basisklasse
+  Xl0gDeliveryPromise.php              Plugin base class
   Service/
-    Xl0gPromiseClient.php              API-Client (Config + HTTP + Fehler)
-    PromiseResult.php                  DTO der Zahlen
+    Xl0gPromiseClient.php              API client (config + HTTP + errors)
+    PromiseResult.php                  DTO of the numbers
   Storefront/
     Controller/DeliveryPromiseController.php
     Subscriber/StructuredDataSubscriber.php        (B3)
   Resources/
     config/  services.xml · routes.xml · config.xml · plugin.png · plugin.svg
-    views/storefront/…                 Twig-Erweiterungen
-    app/storefront/src/…               Storefront-JS-Plugin
-    snippet/storefront.*.json          Übersetzbare Texte
+    views/storefront/…                 Twig extensions
+    app/storefront/src/…               Storefront JS plugin
+    snippet/storefront.*.json          Translatable texts
 tests/                                 PHPUnit (B6)
 docs/                                  ARCHITECTURE · CONFIGURATION · DEVELOPMENT
 ```
