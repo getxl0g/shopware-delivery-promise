@@ -2,6 +2,18 @@
 
 Alle nennenswerten Änderungen an diesem Plugin. Format: [Keep a Changelog](https://keepachangelog.com/de/1.0.0/).
 
+## [Unreleased] — 0.7.1
+- **README auf Englisch** (`README.md`) und **auf Deutsch** (`README.de.md`); kein fester Beispielsatz mit Datum mehr —
+  ein Datum im Beispiel veraltet.
+- **Unterstützte Shopware-Versionen** als Regel: jede Linie, die noch Releases von Shopware bekommt; fällt eine Linie aus
+  dem Herstellersupport, lässt die nächste Plugin-Version sie offiziell fallen.
+- **Barrierefreiheit:** der Countdown ist ein stiller Timer (`role="timer"`, `aria-live="off"`) — vorher las ein
+  Screenreader den ganzen Satz alle 30 Sekunden neu vor.
+- **`scripts/kompatibilitaet.sh <version>`:** Test gegen eine echte Shopware-Instanz in Docker (Installation, Theme,
+  Produktseite mit Widget, Einladung an Agenten, Unit-Tests).
+- **`scripts/pruefe-oeffentlich.sh`:** vor jedem Push keine Schlüssel, Passwörter, Tokens oder `.env`-Dateien im
+  Repository; optional eine lokale Liste verbotener Wörter.
+
 ## [0.7.0] — 2026-10-17 — Seitenaufrufe an xl0g melden; Discovery sagt die Wahrheit
 - **Neu: „Seitenaufrufe an xl0g melden“** (Plugin-Einstellung `reportPageViews`, **ab Werk aus**). Ist sie an, meldet
   das Plugin je Aufruf einer Produktseite die Artikelnummer, den Host des Shops und die **Art des Besuchers**

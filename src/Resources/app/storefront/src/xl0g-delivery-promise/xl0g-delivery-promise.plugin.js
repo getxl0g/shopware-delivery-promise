@@ -38,7 +38,9 @@ export default class Xl0gDeliveryPromisePlugin extends Plugin {
 
         const html = template
             .replace('{date}', `<b class="xl0g-dp-date">${this._escape(this._formatDate(data.promised_date))}</b>`)
-            .replace('{countdown}', `<b class="xl0g-dp-countdown">${this._escape(this._formatCountdown(data.cutoff_at))}</b>`);
+            .replace('{countdown}', `<b class="xl0g-dp-countdown" role="timer" aria-live="off">${this._escape(this._formatCountdown(data.cutoff_at))}</b>`);
+        // 0.7.1 (Barrierefreiheit): der Block ist aria-live="polite" und wird einmal angesagt; der Countdown tickt alle 30 s
+        // und ist deshalb ein stiller Timer (role="timer", aria-live="off") — sonst läse ein Screenreader den Satz ständig vor.
 
         this.el.innerHTML = html;
         this.el.hidden = false;

@@ -66,7 +66,7 @@ Sales Channel überschreibbar, ganz ohne Code:
 | `xl0g.deliveryPromise.unitHours` | „Std." | — |
 | `xl0g.deliveryPromise.unitMinutes` | „Min." | — |
 
-`{date}` wird lokalisiert gerendert (z. B. „Mittwoch, 15. Juli"), `{countdown}` tickt live gegen den
+`{date}` wird lokalisiert gerendert (Wochentag, Tag und Monat in der Sprache des Verkaufskanals), `{countdown}` tickt live gegen den
 xl0g-Cutoff. Prinzip: **die Zahlen kommen von xl0g, der Text lebt hier** — so passt die Sprache nativ
 zu deinem mehrsprachigen Shop.
 

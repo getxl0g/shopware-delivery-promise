@@ -1,48 +1,51 @@
-# xl0g Lieferversprechen — Plugin für Shopware 6
+# xl0g Delivery Promise — Shopware 6 plugin
 
-**Der echte Liefertermin auf jeder Produktseite.** Statt „Lieferung in 2–4 Werktagen“ zeigt der Shop den Termin, den
-[xl0g](https://xl0g.com) aus Lagerkapazität, Bestellschluss und Laufzeit berechnet:
+**English** · [Deutsch](README.de.md)
 
-> Geliefert bis **Mittwoch, 21. Oktober** — bestellen Sie in den nächsten **2 Std. 14 Min.**
+**The real delivery date on every product page.** Instead of “delivery in 2–4 business days”, the shop shows the date
+that [xl0g](https://xl0g.com) calculates from warehouse capacity, order cutoff and transit time — for example:
 
-Dazu legt das Plugin den Termin maschinenlesbar ab, damit Google und KI-Assistenten wie ChatGPT, Claude oder Perplexity
-die Frage „Bis wann ist es da?“ richtig beantworten.
+> Delivered by **‹weekday, date›** — order within the next **‹hours and minutes›**.
 
-## Was das Plugin kann
+The date and the countdown are calculated live on every page view. The plugin also publishes the date in machine-readable
+form, so Google and AI assistants such as ChatGPT, Claude or Perplexity answer “When will it arrive?” correctly.
 
-| Funktion | Was passiert | Schalter |
+## Features
+
+| Feature | What happens | Setting |
 |---|---|---|
-| **Liefertermin auf der Produktseite** | Widget unter dem Kauf-Bereich mit Datum und Countdown bis zum Bestellschluss | immer, sobald verbunden |
-| **Liefertermin im Checkout** | dasselbe auf der Bestellabschluss-Seite | „Widget auch im Checkout zeigen“ (aus) |
-| **Strukturierte Daten (JSON-LD)** | Schema.org `Product`/`Offer`/`OfferShippingDetails` mit `x-xl0g-delivery-date` und `x-xl0g-cutoff-at` | „JSON-LD auf der Produktseite ausgeben“ (an) |
-| **Einladung an KI-Assistenten** | `/llms.txt` und `/.well-known/xl0g-delivery.json` sagen Agenten, wo der Termin steht — und nur das, was der Shop wirklich ausliefert | folgt dem JSON-LD-Schalter |
-| **Seitenaufrufe an xl0g melden** (ab 0.7.0) | je Produktseite Artikelnummer und Art des Besuchers (Mensch, KI-Agent, Suchdienst, Werkzeug); in xl0g sichtbar unter „Produkt-Check für KI → Wer kommt?“ | „Seitenaufrufe an xl0g melden“ (aus) |
+| **Delivery date on the product page** | Widget below the buy box with the date and a countdown to the order cutoff | always, once connected |
+| **Delivery date in checkout** | the same on the order confirmation page | “Show the widget in checkout too” (off) |
+| **Structured data (JSON-LD)** | Schema.org `Product`/`Offer`/`OfferShippingDetails` with `x-xl0g-delivery-date` and `x-xl0g-cutoff-at` | “Emit JSON-LD on the product page” (on) |
+| **Invitation to AI assistants** | `/llms.txt` and `/.well-known/xl0g-delivery.json` tell agents where the date is — and only what the shop actually delivers | follows the JSON-LD setting |
+| **Report page views to xl0g** (from 0.7.0) | per product page the product number and the kind of visitor (person, AI agent, search engine, tool); visible in xl0g under “Product Check for AI → Who visits?” | “Report page views to xl0g” (off) |
 
-## Das Prinzip: Zahlen von xl0g, Sprache im Shop
+## The principle: numbers from xl0g, language in the shop
 
-xl0g liefert nur **Zahlen** (`GET /api/promise?format=data`: Liefertermin, Bestellschluss, Laufzeit). Die **Texte**
-macht das Plugin — je Verkaufskanal über die Snippets von Shopware. So spricht jeder Kanal seine eigene Sprache, und
-der Wortlaut lässt sich im Admin ändern, ohne xl0g anzufassen.
+xl0g delivers **numbers** only (`GET /api/promise?format=data`: delivery date, cutoff, transit time). The plugin writes the
+**text** — per sales channel, via Shopware snippets. Every channel speaks its own language, and the wording can be changed
+in the admin without touching xl0g.
 
-## Datenschutz und Sicherheit
+## Privacy and security
 
-- **Der API-Schlüssel bleibt im Shop.** Der Browser spricht nur mit dem Shop; der Shop fragt xl0g serverseitig.
-- **Keine Personendaten an xl0g.** Auch mit eingeschalteter Meldung der Seitenaufrufe gehen nur Artikelnummer, Host
-  des Shops und die Art des Besuchers an xl0g. Die Art ordnet das Plugin im Shop ein; User-Agent, IP-Adresse,
-  Cookies, Sitzung und Warenkorb verlassen den Shop nie.
-- **Fällt xl0g aus, bleibt der Shop heil:** kein Termin, kein Widget — nie ein kaputtes Element, nie ein Fehler
-  beim Käufer. Zeitgrenze je Abruf 3 Sekunden.
-- **Kein Selbst-Update.** Das Plugin lädt nie Code nach. Updates kommen über Composer oder das Release-ZIP, also über
-  den gewohnten Deploy des Shops (Begründung in [docs/OPERATIONS.md](docs/OPERATIONS.md), Abschnitt 5).
+- **The API key stays in the shop.** The browser only talks to the shop; the shop asks xl0g server-side.
+- **No personal data to xl0g.** Even with page-view reporting on, only the product number, the shop host and the kind of
+  visitor are sent. The plugin classifies the visitor in the shop; user agent, IP address, cookies, session and cart never
+  leave the shop.
+- **If xl0g is unavailable, the shop stays intact:** no date, no widget — never a broken element, never an error for the
+  buyer. Timeout per request 3 seconds.
+- **No self-update.** The plugin never downloads code. Updates come via Composer or the release ZIP, i.e. through the
+  shop’s normal deployment (reasoning in [docs/OPERATIONS.md](docs/OPERATIONS.md), section 5).
 
-## Voraussetzungen
+## Supported Shopware versions
 
-- Shopware **6.7**
-- Ein Zugang zu xl0g mit einem API-Schlüssel mit der Berechtigung `promise:read` — [xl0g.com](https://xl0g.com)
+The plugin supports every Shopware line that still receives releases from Shopware (currently **6.7** and **6.6**). When a
+line goes out of manufacturer support, the next plugin release drops it officially. Details per version in
+[CHANGELOG.md](CHANGELOG.md).
 
 ## Installation
 
-**Über Composer (empfohlen)** — Updates kommen dann mit dem normalen Deploy des Shops:
+**Via Composer (recommended)** — updates then arrive with the shop’s normal deployment:
 
 ```sh
 composer config repositories.xl0g vcs https://github.com/getxl0g/shopware-delivery-promise
@@ -53,21 +56,12 @@ bin/build-storefront.sh
 bin/console cache:clear
 ```
 
-**Oder als ZIP:** `Xl0gDeliveryPromise-<Version>.zip` von der Seite
-[Releases](https://github.com/getxl0g/shopware-delivery-promise/releases) im Admin unter Erweiterungen hochladen,
-installieren und aktivieren; danach Storefront bauen und Cache leeren.
+**Or as ZIP:** upload `Xl0gDeliveryPromise-<version>.zip` from
+[Releases](https://github.com/getxl0g/shopware-delivery-promise/releases) in the admin under Extensions, install and
+activate; then build the storefront and clear the cache.
 
-Einrichtung Schritt für Schritt: [docs/INSTALLATION.md](docs/INSTALLATION.md).
-
-## Dokumentation
-
-- [docs/INSTALLATION.md](docs/INSTALLATION.md) — Installation, API-Schlüssel, Einrichtung je Verkaufskanal, Prüfen
-- [docs/CONFIGURATION.md](docs/CONFIGURATION.md) — alle Einstellungen und Texte
-- [docs/OPERATIONS.md](docs/OPERATIONS.md) — Betrieb, Überwachung, Sicherheit, Updates
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — Aufbau, Datenfluss
-- [docs/UCP_UEBERBLICK.md](docs/UCP_UEBERBLICK.md) — KI-Assistenten und maschinenlesbare Produktdaten für Einsteiger
-- [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) — Entwicklung und Tests
-- [CHANGELOG.md](CHANGELOG.md) — Versionen
+Requirements: a Shopware version from the list above and an xl0g account with an API key holding the `promise:read`
+permission — [xl0g.com](https://xl0g.com). Step-by-step setup (German): [docs/INSTALLATION.md](docs/INSTALLATION.md).
 
 ## Tests
 
@@ -75,9 +69,8 @@ Einrichtung Schritt für Schritt: [docs/INSTALLATION.md](docs/INSTALLATION.md).
 composer install && vendor/bin/phpunit
 ```
 
-Unit-Tests der Service-Schicht, lauffähig ohne Shopware-Kernel.
+Unit tests of the service layer; they run without a Shopware kernel.
 
-## Lizenz
+## License
 
-[MIT](LICENSE) © 2026 xl0g. Der Code des Plugins ist offen; der Liefertermin wird bei xl0g berechnet und setzt einen
-Zugang voraus.
+[MIT](LICENSE) © 2026 xl0g. The plugin code is open; the delivery date is calculated by xl0g and requires an account.
