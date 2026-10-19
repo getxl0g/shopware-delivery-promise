@@ -25,42 +25,61 @@ REPO="$(cd "$(dirname "$0")/.." && pwd)"
 WORKDIR="${XL0G_SW_WORKDIR:-$HOME/go/.sw-compat-$VERSION}"
 NAME="sw-compat-$(echo "$VERSION" | tr . -)"
 NET="$NAME-net"
+VOL="$NAME-shop"   # the shop lives in a Docker volume: tens of thousands of files through the Colima mount lost some (realpath failed)
 PORT="${XL0G_SW_PORT:-18$(printf '%03d' $((RANDOM % 900 + 100)))}"
 LOG="$WORKDIR/log.txt"
 
 cleanup() {
     docker rm -f "$NAME-web" "$NAME-db" >/dev/null 2>&1
     docker network rm "$NET" >/dev/null 2>&1
+    docker volume rm "$VOL" >/dev/null 2>&1
     [ "${XL0G_SW_KEEP:-0}" = "1" ] || rm -rf "$WORKDIR"
 }
 trap cleanup EXIT
 step() { echo "== $*" | tee -a "$LOG"; }
-red() { echo "RED: $*" | tee -a "$LOG"; exit 1; }
+red() {
+    echo "RED: $*" | tee -a "$LOG"
+    # Shopware's own error log, if the shop is already running — otherwise a 500 says nothing about its cause.
+    docker exec "$NAME-web" sh -c 'tail -n 60 /var/www/html/var/log/*.log 2>/dev/null' >>"$LOG" 2>&1
+    cp "$LOG" "${TMPDIR:-/tmp}/sw-compat-$VERSION-red.log" 2>/dev/null
+    tail -60 "$LOG" >&2
+    exit 1
+}
 
-rm -rf "$WORKDIR"; mkdir -p "$WORKDIR/shop"
+rm -rf "$WORKDIR"; mkdir -p "$WORKDIR"
+docker volume rm "$VOL" >/dev/null 2>&1; docker volume create "$VOL" >/dev/null
 : > "$LOG"
 
 step "Shopware $VERSION via Composer (PHP $PHP)"
-docker run --rm -v "$WORKDIR/shop:/app" -w /app composer:2 sh -c "
-    composer create-project shopware/production . --no-interaction --no-scripts --ignore-platform-reqs -q &&
-    composer require -W --no-interaction --no-scripts --ignore-platform-reqs -q \
+# Composer must resolve for the PHP of the runtime ($PHP), not for its own: with --ignore-platform-reqs it installed a
+# Symfony release that needs PHP 8.4 (ParseError in the shop). Only PHP extensions are ignored (they are in the runtime).
+docker run --rm -v "$VOL:/app" -w /app composer:2 sh -c "
+    composer create-project shopware/production . --no-interaction --no-scripts --no-install -q &&
+    composer config platform.php $PHP.99 &&
+    composer require -W --no-interaction --no-scripts --ignore-platform-req='ext-*' -q \
         shopware/core:$VERSION shopware/storefront:$VERSION shopware/administration:$VERSION" >>"$LOG" 2>&1 \
     || red "Composer could not resolve Shopware $VERSION"
 
 step "Plugin from the committed state"
-mkdir -p "$WORKDIR/shop/custom/plugins/Xl0gDeliveryPromise"
-git -C "$REPO" archive HEAD | tar -x -C "$WORKDIR/shop/custom/plugins/Xl0gDeliveryPromise"
+git -C "$REPO" archive HEAD | docker run -i --rm -v "$VOL:/app" alpine:3 \
+    sh -c 'mkdir -p /app/custom/plugins/Xl0gDeliveryPromise && tar -x -C /app/custom/plugins/Xl0gDeliveryPromise' \
+    || red "copying the plugin into the shop volume"
 
 step "Database and runtime"
 docker network create "$NET" >/dev/null
 docker run -d --name "$NAME-db" --network "$NET" -e MARIADB_ROOT_PASSWORD=test -e MARIADB_DATABASE=shopware mariadb:11 >/dev/null
 for i in $(seq 1 60); do docker exec "$NAME-db" mariadb -uroot -ptest -e 'select 1' >/dev/null 2>&1 && break; sleep 2; done
 docker run -d --name "$NAME-web" --network "$NET" -p "127.0.0.1:$PORT:8000" \
-    -v "$WORKDIR/shop:/var/www/html" \
+    -v "$VOL:/var/www/html" \
     -e DATABASE_URL="mysql://root:test@$NAME-db:3306/shopware" -e APP_URL="http://localhost:$PORT" \
     -e APP_ENV=prod -e APP_SECRET=test-secret-only-for-the-compatibility-test -e INSTANCE_ID=compat \
     "shopware/docker-base:$PHP-nginx" >/dev/null || red "Runtime shopware/docker-base:$PHP-nginx does not start"
-console() { docker exec -u root -w /var/www/html "$NAME-web" php -d memory_limit=2G bin/console "$@" >>"$LOG" 2>&1; }
+# As root (the volume belongs to root), then everything back to www-data — the web server writes its cache as www-data.
+console() {
+    docker exec -u root -w /var/www/html "$NAME-web" php -d memory_limit=2G bin/console "$@" >>"$LOG" 2>&1; local rc=$?
+    docker exec -u root "$NAME-web" chown -R www-data /var/www/html/var /var/www/html/public >/dev/null 2>&1
+    return $rc
+}
 
 step "Install Shopware"
 docker exec -u root -w /var/www/html "$NAME-web" sh -c 'composer run-script post-install-cmd >/dev/null 2>&1 || true; chown -R www-data /var/www/html' >>"$LOG" 2>&1
@@ -74,13 +93,31 @@ console theme:compile || red "theme:compile"
 console cache:clear || red "cache:clear"
 docker exec -u root "$NAME-web" chown -R www-data /var/www/html >/dev/null 2>&1
 
-step "3. Product page"
+step "3. Product page (a test product created via the Admin API — a fresh install has no products)"
 URL="http://localhost:$PORT"
-PDP="$(curl -s "$URL/" | grep -oE 'href="[^"]+/detail/[0-9a-f]{32}"' | head -1 | sed -E 's/href="([^"]+)"/\1/')"
-[ -n "$PDP" ] || PDP="$(curl -s "$URL/" | grep -oE "href=\"$URL/[^\"]+/[A-Za-z0-9.-]+\"" | head -1 | sed -E 's/href="([^"]+)"/\1/')"
-[ -n "$PDP" ] || red "no product page found on the home page"
-code="$(curl -s -o "$WORKDIR/pdp.html" -w '%{http_code}' "$PDP")"
-[ "$code" = "200" ] || red "product page $PDP answers $code"
+# Throwaway admin user of this test instance only: random password per run, deleted with the container.
+PW="$(python3 -c 'import secrets; print(secrets.token_hex(16))')"
+console user:create --admin --password="$PW" --email=compat-test@example.com compat || red "user:create"
+TOKEN="$(curl -s -X POST "$URL/api/oauth/token" -H 'Content-Type: application/json' \
+    -d "{\"grant_type\":\"password\",\"client_id\":\"administration\",\"username\":\"compat\",\"password\":\"$PW\",\"scopes\":\"write\"}" \
+    | python3 -c 'import sys,json; print(json.load(sys.stdin)["access_token"])')" || red "Admin API token"
+api() { curl -s -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -H 'Accept: application/json' "$@"; }
+first_id() { python3 -c 'import sys,json; print(json.load(sys.stdin)["data"][0]["id"])'; }
+TAX="$(api -X POST "$URL/api/search/tax" -d '{"limit":1}' | first_id)" || red "tax"
+CUR="$(api -X POST "$URL/api/search/currency" -d '{"limit":1,"filter":[{"type":"equals","field":"isoCode","value":"EUR"}]}' | first_id)" || red "currency"
+SC="$(api -X POST "$URL/api/search/sales-channel" -d '{"limit":1,"filter":[{"type":"equals","field":"typeId","value":"8a243080f92e4c719546314b577cf82b"}]}' | first_id)" || red "storefront sales channel"
+PID="$(python3 -c 'import uuid; print(uuid.uuid4().hex)')"
+api -X POST "$URL/api/product" -d "{\"id\":\"$PID\",\"name\":\"Compatibility test product\",\"productNumber\":\"COMPAT-1\",\"stock\":10,\"active\":true,\"taxId\":\"$TAX\",\"price\":[{\"currencyId\":\"$CUR\",\"gross\":19.99,\"net\":16.80,\"linked\":true}],\"visibilities\":[{\"salesChannelId\":\"$SC\",\"visibility\":30}]}" >>"$LOG" 2>&1
+console cache:clear || red "cache:clear after the test product"
+PDP="$URL/detail/$PID"
+# /detail/<id> redirects (301) to the SEO URL of the product — follow it.
+code="$(curl -s -L -o "$WORKDIR/pdp.html" -w '%{http_code}' "$PDP")"
+if [ "$code" != "200" ]; then
+    # Is it the plugin? Same page once more with the plugin deactivated.
+    console plugin:deactivate Xl0gDeliveryPromise; console cache:clear
+    ohne="$(curl -s -L -o /dev/null -w '%{http_code}' "$PDP")"
+    red "product page $PDP answers $code (with the plugin deactivated: $ohne)"
+fi
 grep -q 'data-xl0g-delivery-promise' "$WORKDIR/pdp.html" || red "product page without the widget placeholder"
 
 step "4. Invitation to agents"

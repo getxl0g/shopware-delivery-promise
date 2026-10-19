@@ -75,7 +75,7 @@ the plugin then deliberately hides itself.
 
 Check once against the real Shopware instance before all channels are switched over:
 
-1. Does the widget appear in the right place? (Twig blocks `page_product_detail_buy_container`,
+1. Does the widget appear in the right place? (Twig blocks `buy_widget_delivery_informations` in the buy box,
    `page_checkout_confirm_tos` — a custom theme can override them.)
 2. Does the JSON-LD carry real values (name, price, availability)?
 3. Do `/.well-known/xl0g-delivery.json` and `/llms.txt` respond?

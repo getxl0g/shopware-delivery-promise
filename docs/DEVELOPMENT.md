@@ -51,7 +51,7 @@ Details in [ARCHITECTURE.md](ARCHITECTURE.md). In short:
 
 ## Open test points against real 6.7 (before the release)
 
-- Verify the Twig block names (PDP: `page_product_detail_buy_container`, checkout: `page_checkout_confirm_tos`).
+- Twig blocks: product page `buy_widget_delivery_informations` in `component/buy-widget/buy-widget.html.twig` (Shopware 6.6 and 6.7; the older `page_product_detail_buy_container` is no longer rendered there), checkout `page_checkout_confirm_tos`.
 - `getTranslation('name')` / `getCalculatedPrice()` against the real `SalesChannelProductEntity`.
 - Routes `/.well-known/xl0g-delivery.json` + `/llms.txt` match (no web server conflict).
 - Run Google’s Rich Results Test over a real PDP.
