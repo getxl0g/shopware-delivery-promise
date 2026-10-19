@@ -132,11 +132,6 @@ step "4b. Invitation to agents"
 curl -s "$URL/.well-known/xl0g-delivery.json" | python3 -c 'import sys,json; d=json.load(sys.stdin); assert d.get("protocol")=="xl0g-agent-discovery"' \
     || red "/.well-known/xl0g-delivery.json"
 
-step "5. Unit tests (without the Shopware core, as in docs/DEVELOPMENT.md)"
-mkdir -p "$WORKDIR/unit" && cp -R "$REPO/src" "$REPO/tests" "$REPO/phpunit.xml.dist" "$REPO/composer.json" "$WORKDIR/unit/"
-python3 -c "import json,sys; p=sys.argv[1]; d=json.load(open(p)); d['require']={}; d.setdefault('autoload-dev',{})['psr-4']={'Xl0g\\\\DeliveryPromise\\\\Tests\\\\':'tests/'}; json.dump(d,open(p,'w'),indent=2)" "$WORKDIR/unit/composer.json"
-docker run --rm -v "$WORKDIR/unit:/app" -w /app composer:2 sh -c 'composer install --no-interaction -q && vendor/bin/phpunit' >>"$LOG" 2>&1 || red "PHPUnit"
-
 LIVE="without xl0g access (step 6 skipped)"
 if [ -n "${XL0G_TEST_API_URL:-}" ] && [ -n "${XL0G_TEST_API_KEY:-}" ]; then
     step "6. With xl0g access: delivery date in the JSON-LD and in the widget endpoint"
@@ -175,5 +170,17 @@ PY
         || red "widget endpoint /xl0g/delivery-promise without promised_date"
     LIVE="delivery date from xl0g in JSON-LD and widget endpoint"
 fi
+
+step "7. Unit tests (PHPUnit) inside this shop — the tests use Shopware classes (mocks of the config service, structs)"
+# PHPUnit into this throwaway shop only; the plugin's own namespaces are registered by a small bootstrap file.
+docker run --rm -v "$VOL:/app" -w /app composer:2 sh -c "
+    composer require --dev -W --no-interaction --no-scripts --ignore-platform-req='ext-*' -q phpunit/phpunit:^10.5 &&
+    printf '%s\n' '<?php' \
+        '\$l = require __DIR__ . \"/vendor/autoload.php\";' \
+        '\$l->addPsr4(\"Xl0g\\\\DeliveryPromise\\\\\", __DIR__ . \"/custom/plugins/Xl0gDeliveryPromise/src/\");' \
+        '\$l->addPsr4(\"Xl0g\\\\DeliveryPromise\\\\Tests\\\\\", __DIR__ . \"/custom/plugins/Xl0gDeliveryPromise/tests/\");' \
+        > xl0g-test-bootstrap.php" >>"$LOG" 2>&1 || red "installing PHPUnit into the test shop"
+docker exec -u root -w /var/www/html "$NAME-web" php vendor/bin/phpunit \
+    -c custom/plugins/Xl0gDeliveryPromise/phpunit.xml.dist --bootstrap xl0g-test-bootstrap.php >>"$LOG" 2>&1 || red "PHPUnit"
 
 echo "GREEN: Shopware $VERSION — plugin installed, theme built, product page with widget, invitation to agents, unit tests, $LIVE" | tee -a "$LOG"
