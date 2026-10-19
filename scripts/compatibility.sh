@@ -70,7 +70,9 @@ git -C "$REPO" archive HEAD | docker run -i --rm -v "$VOL:/app" alpine:3 \
 step "Database and runtime"
 docker network create "$NET" >/dev/null
 docker run -d --name "$NAME-db" --network "$NET" -e MARIADB_ROOT_PASSWORD=test -e MARIADB_DATABASE=shopware mariadb:11 >/dev/null
-for i in $(seq 1 60); do docker exec "$NAME-db" mariadb -uroot -ptest -e 'select 1' >/dev/null 2>&1 && break; sleep 2; done
+# Over TCP, not the socket: MariaDB restarts once after initialising, and the socket answers before TCP listens for good.
+for i in $(seq 1 90); do docker exec "$NAME-db" mariadb -h127.0.0.1 -uroot -ptest -e 'select 1' >/dev/null 2>&1 && break; sleep 2; done
+sleep 3
 docker run -d --name "$NAME-web" --network "$NET" -p "127.0.0.1:$PORT:8000" \
     -v "$VOL:/var/www/html" \
     -e DATABASE_URL="mysql://root:test@$NAME-db:3306/shopware" -e APP_URL="http://localhost:$PORT" \
