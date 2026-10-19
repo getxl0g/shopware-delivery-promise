@@ -11,8 +11,10 @@
 #   3. the product page answers 200 and carries the widget placeholder (data-xl0g-delivery-promise)
 #   4. /llms.txt 200 and /.well-known/xl0g-delivery.json 200 with valid JSON
 #   5. the plugin's unit tests (PHPUnit) run green
-# Not checked: the storefront JS (needs Node and a build) and the request to xl0g (no key in the test — without a key
-# the plugin deliberately shows nothing; what is checked is that it then breaks nothing).
+#   6. only if XL0G_TEST_API_URL and XL0G_TEST_API_KEY are set (a test access with promise:read only, kept outside the
+#      repository): the product page carries x-xl0g-delivery-date in its JSON-LD and /xl0g/delivery-promise answers
+#      with promised_date. Without them the plugin deliberately shows nothing; steps 1–5 check that it then breaks nothing.
+# Not checked: the storefront JS (needs Node and a build).
 #
 # The working directories live under $HOME (Colima mounts only the home directory) and are deleted at the end,
 # unless XL0G_SW_KEEP=1. No credentials: the database is a throwaway instance with fixed test values.
@@ -130,4 +132,39 @@ mkdir -p "$WORKDIR/unit" && cp -R "$REPO/src" "$REPO/tests" "$REPO/phpunit.xml.d
 python3 -c "import json,sys; p=sys.argv[1]; d=json.load(open(p)); d['require']={}; d.setdefault('autoload-dev',{})['psr-4']={'Xl0g\\\\DeliveryPromise\\\\Tests\\\\':'tests/'}; json.dump(d,open(p,'w'),indent=2)" "$WORKDIR/unit/composer.json"
 docker run --rm -v "$WORKDIR/unit:/app" -w /app composer:2 sh -c 'composer install --no-interaction -q && vendor/bin/phpunit' >>"$LOG" 2>&1 || red "PHPUnit"
 
-echo "GREEN: Shopware $VERSION — plugin installed, theme built, product page with widget, invitation to agents, unit tests" | tee -a "$LOG"
+LIVE="without xl0g access (step 6 skipped)"
+if [ -n "${XL0G_TEST_API_URL:-}" ] && [ -n "${XL0G_TEST_API_KEY:-}" ]; then
+    step "6. With xl0g access: delivery date in the JSON-LD and in the widget endpoint"
+    # The key travels on stdin (never in a command line, never in the log). Use a test access with promise:read only.
+    python3 -c 'import json,os; print(json.dumps({"null": {
+        "Xl0gDeliveryPromise.config.apiBaseUrl": os.environ["XL0G_TEST_API_URL"],
+        "Xl0gDeliveryPromise.config.apiKey": os.environ["XL0G_TEST_API_KEY"],
+        "Xl0gDeliveryPromise.config.enableJsonLd": True}}))' \
+        | api -X POST "$URL/api/_action/system-config/batch" --data-binary @- -o /dev/null -w '%{http_code}\n' >>"$LOG" 2>&1 \
+        || red "saving the plugin configuration"
+    console cache:clear || red "cache:clear after the configuration"
+    code="$(curl -s -L -o "$WORKDIR/pdp-live.html" -w '%{http_code}' "$PDP")"
+    [ "$code" = "200" ] || red "product page with xl0g access answers $code"
+    python3 - "$WORKDIR/pdp-live.html" <<'PY' >>"$LOG" 2>&1 || red "product page without x-xl0g-delivery-date in the JSON-LD"
+import json, re, sys
+html = open(sys.argv[1], encoding="utf-8", errors="replace").read()
+blocks = re.findall(r'<script type="application/ld\+json">(.*?)</script>', html, re.S)
+dates = []
+for b in blocks:
+    try:
+        d = json.loads(b)
+    except ValueError:
+        continue
+    for item in d if isinstance(d, list) else [d]:
+        if isinstance(item, dict) and item.get("x-xl0g-delivery-date"):
+            dates.append(item["x-xl0g-delivery-date"])
+assert dates and re.fullmatch(r"\d{4}-\d{2}-\d{2}", dates[0]), "no delivery date in %d JSON-LD blocks" % len(blocks)
+print("JSON-LD delivery date:", dates[0])
+PY
+    curl -s "$URL/xl0g/delivery-promise?context=pdp" -H 'X-Requested-With: XMLHttpRequest' \
+        | python3 -c 'import sys,json,re; d=json.load(sys.stdin); assert re.fullmatch(r"\d{4}-\d{2}-\d{2}", d.get("promised_date") or ""); print("widget endpoint:", d["promised_date"])' >>"$LOG" 2>&1 \
+        || red "widget endpoint /xl0g/delivery-promise without promised_date"
+    LIVE="delivery date from xl0g in JSON-LD and widget endpoint"
+fi
+
+echo "GREEN: Shopware $VERSION — plugin installed, theme built, product page with widget, invitation to agents, unit tests, $LIVE" | tee -a "$LOG"
