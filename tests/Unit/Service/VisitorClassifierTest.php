@@ -19,7 +19,7 @@ class VisitorClassifierTest extends TestCase
         yield 'Claude-SearchBot vor ClaudeBot' => ['Mozilla/5.0 (compatible; Claude-SearchBot/1.0)', 'agent', 'Claude-SearchBot'];
         yield 'Googlebot ist Suchdienst' => ['Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)', 'bot', ''];
         yield 'Applebot ist Suchdienst' => ['Mozilla/5.0 (Macintosh) AppleWebKit (KHTML, like Gecko) Applebot/0.1', 'bot', ''];
-        yield 'namenloser Bot mit Mozilla' => ['Mozilla/5.0 (compatible; XyzBot/1.0)', 'bot', ''];
+        yield 'unnamed bot with Mozilla' => ['Mozilla/5.0 (compatible; XyzBot/1.0)', 'bot', ''];
         yield 'curl' => ['curl/8.7.1', 'werkzeug', ''];
         yield 'Headless-Chrome' => ['Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 HeadlessChrome/131.0 Safari/537.36', 'werkzeug', ''];
         yield 'leer' => ['', 'bot', ''];

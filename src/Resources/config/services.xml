@@ -5,10 +5,10 @@
     <services>
         <defaults autowire="true" autoconfigure="true"/>
 
-        <!-- Service: kapselt Config + HTTP-Aufruf der xl0g-Promise-API (X-API-Key, server-seitig). -->
+        <!-- Service: wraps the config and the HTTP call to the xl0g promise API (X-API-Key, server-side). -->
         <service id="Xl0g\DeliveryPromise\Service\Xl0gPromiseClient"/>
 
-        <!-- Service: baut das Schema.org-JSON-LD (reine Funktion, unit-testbar). -->
+        <!-- Service: builds the Schema.org JSON-LD (pure function, unit-testable). -->
         <service id="Xl0g\DeliveryPromise\Service\StructuredDataBuilder"/>
 
         <!-- 0.7.0: classifies visitors (browser/agent/bot/werkzeug = tool) — the user agent never leaves the shop. -->

@@ -49,9 +49,15 @@ Details in [ARCHITECTURE.md](ARCHITECTURE.md). In short:
 - **Hide robustly.** Not configured / error / no date → widget & JSON-LD stay away.
 - **Additive.** Twig via `sw_extends` + block append, never override a core template.
 
-## Open test points against real 6.7 (before the release)
+## Tested against real Shopware (0.7.1)
 
-- Twig blocks: product page `buy_widget_delivery_informations` in `component/buy-widget/buy-widget.html.twig` (Shopware 6.6 and 6.7; the older `page_product_detail_buy_container` is no longer rendered there), checkout `page_checkout_confirm_tos`.
-- `getTranslation('name')` / `getCalculatedPrice()` against the real `SalesChannelProductEntity`.
-- Routes `/.well-known/xl0g-delivery.json` + `/llms.txt` match (no web server conflict).
-- Run Google’s Rich Results Test over a real PDP.
+`scripts/compatibility.sh` checks, against the latest release of each supported line (2026-10-19: 6.7.15.1 and
+6.6.10.29): installation, theme build, product page with the widget placeholder, `/llms.txt`,
+`/.well-known/xl0g-delivery.json` and the unit tests. The product page block is
+`buy_widget_delivery_informations` in `component/buy-widget/buy-widget.html.twig` (the older
+`page_product_detail_buy_container` is no longer rendered since the buy box became a component). Still manual, because
+the test has no xl0g key:
+
+- The JSON-LD with real values (needs a key with `promise:read`): Google’s Rich Results Test over a real product page.
+- The checkout widget (block `page_checkout_confirm_tos`, off by default).
+- A custom theme may override `buy_widget_delivery_informations` — check the product page once per theme.

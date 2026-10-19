@@ -2,9 +2,15 @@
 
 All notable changes to this plugin. Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased] — 0.7.1
-- **README in English** (`README.md`) and **in German** (`README.de.md`); no fixed example sentence with a date any
-  more — a date in an example goes stale.
+## [0.7.1] — 2026-10-19 — Widget on standard Shopware 6.6/6.7 product pages; Shopware 6.6 supported; English only
+- **Fix: the widget and the JSON-LD now appear on a standard Shopware 6.6/6.7 product page.** Since the buy box became
+  the `buy-widget` component, the block `page_product_detail_buy_container` of `page/product-detail/index.html.twig` is no
+  longer rendered there, so the placeholder and the JSON-LD never showed up on a standard theme. The plugin now hooks into
+  `buy_widget_delivery_informations` (right after Shopware's own delivery information). Found by the new compatibility test.
+- **Supported Shopware versions: 6.6 and 6.7** (`shopware/core: ~6.6.0 || ~6.7.0`), each tested with
+  `scripts/compatibility.sh` against the latest release of the line.
+- **Repository in English only** (README, docs, code comments, commits); German stays where the shop shows it
+  (configuration labels and snippets `de-DE`). No fixed example sentence with a date any more — a date goes stale.
 - **Supported Shopware versions** as a rule: every line that still receives releases from Shopware; when a line goes
   out of manufacturer support, the next plugin version officially drops it.
 - **Accessibility:** the countdown is a silent timer (`role="timer"`, `aria-live="off"`) — before, a screen reader read

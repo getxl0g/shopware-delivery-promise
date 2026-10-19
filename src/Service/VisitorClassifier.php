@@ -19,7 +19,7 @@ class VisitorClassifier
     public const BOT = 'bot';
     public const TOOL = 'werkzeug';
 
-    /** KI-Agenten, die namentlich gemeldet werden (Teil von xl0g internal/botnamen.Allowlist). */
+    /** AI agents reported by name (a subset of xl0g's list of known agents). */
     public const AGENTS = [
         'GPTBot', 'ClaudeBot', 'PerplexityBot', 'OAI-SearchBot', 'CCBot', 'Bytespider', 'Amazonbot',
         'ChatGPT-User', 'Claude-User', 'Claude-SearchBot', 'Perplexity-User', 'meta-externalagent',

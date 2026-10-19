@@ -1,7 +1,5 @@
 # xl0g Delivery Promise — Shopware 6 plugin
 
-**English** · [Deutsch](README.de.md)
-
 **The real delivery date on every product page.** Instead of “delivery in 2–4 business days”, the shop shows the date
 that [xl0g](https://xl0g.com) calculates from warehouse capacity, order cutoff and transit time — for example:
 

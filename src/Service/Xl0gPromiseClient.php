@@ -31,8 +31,8 @@ class Xl0gPromiseClient
      * @param string      $shippingMethod e.g. "standard" (v0: one representative shipping method)
      * @param string      $context        "pdp" | "checkout" — controls the xl0g template choice
      * @param string|null $salesChannelId config is sales-channel scoped (multilingual/multichannel)
-     * @param array<string, string> $pageView  0.7.0: Meldung des Seitenaufrufs ({@see VisitorClassifier::pageViewQuery()}),
-     *                                         nur wenn {@see isReportPageViewsEnabled()} — sonst leer
+     * @param array<string, string> $pageView  0.7.0: page-view report ({@see VisitorClassifier::pageViewQuery()}),
+     *                                         only if {@see isReportPageViewsEnabled()} — otherwise empty
      */
     public function fetch(
         string $shippingMethod = 'standard',
@@ -65,7 +65,7 @@ class Xl0gPromiseClient
 
             return PromiseResult::fromArray($response->toArray(false));
         } catch (\Throwable) {
-            // Nie das Storefront brechen: jeder Fehler ⇒ null ⇒ Widget versteckt.
+            // Never break the storefront: any error ⇒ null ⇒ widget hidden.
             return null;
         }
     }

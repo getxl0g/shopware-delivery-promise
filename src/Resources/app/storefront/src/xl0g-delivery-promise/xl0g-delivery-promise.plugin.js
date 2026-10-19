@@ -22,7 +22,7 @@ export default class Xl0gDeliveryPromisePlugin extends Plugin {
         const params = new URLSearchParams();
         if (d.shippingMethod) params.set('shipping_method', d.shippingMethod);
         if (d.context) params.set('context', d.context);
-        if (d.sku) params.set('sku', d.sku); // 0.7.0: der Proxy meldet sie nur, wenn der Shop es einschaltet
+        if (d.sku) params.set('sku', d.sku); // 0.7.0: the proxy only reports it if the shop switches reporting on
 
         this._client.get(`${d.endpoint}?${params.toString()}`, (responseText) => {
             let data;
@@ -73,7 +73,7 @@ export default class Xl0gDeliveryPromisePlugin extends Plugin {
         const cd = this.el.querySelector('.xl0g-dp-countdown');
         if (!cd || !cutoffAt) return;
         const update = () => {
-            if (!cd.isConnected) { this._stopCountdown(); return; } // aus dem DOM entfernt → kein Leak
+            if (!cd.isConnected) { this._stopCountdown(); return; } // removed from the DOM → no leak
             const txt = this._formatCountdown(cutoffAt);
             cd.textContent = txt || '—';
             if (txt) this._cdTimer = window.setTimeout(update, 30000);

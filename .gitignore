@@ -6,3 +6,7 @@
 /.phpunit.cache/
 /dist/
 *.log
+
+# local state of the weekly Shopware release check (never committed)
+.shopware-checked
+.shopware-geprueft
