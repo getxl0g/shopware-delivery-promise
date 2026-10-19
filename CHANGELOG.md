@@ -2,7 +2,7 @@
 
 All notable changes to this plugin. Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [0.7.2] — unreleased — Server-rendered widget, cutoff-aware caches, one JSON-LD block per page, shipping methods
+## [0.7.2] — 2026-10-19 — Server-rendered widget, cutoff-aware caches, one JSON-LD block per page, shipping methods
 
 - **Server-rendered widget, no layout shift.** The date is rendered with the page from the object cache; the JS only
   runs the countdown. While the server date is valid, the widget sends no request, so a cached endpoint can never
