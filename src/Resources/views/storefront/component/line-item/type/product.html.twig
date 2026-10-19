@@ -27,9 +27,9 @@
 {% block component_line_item_type_product_delivery_date %}
     {% if config('Xl0gDeliveryPromise.config.deliveryPromiseCheckout') %}
         {% set xl0gDeliveryInfo = lineItem.deliveryInformation ?? null %}
-        {# Digital items carry no DeliveryInformation anyway; the type check makes the exception
-           explicit and independent of this core detail. #}
-        {% set xl0gIsDigital = lineItem.payload.productType|default(null) == constant('Shopware\\Core\\Content\\Product\\ProductDefinition::TYPE_DIGITAL') %}
+        {# Digital items carry no DeliveryInformation anyway; the check makes the exception explicit and
+           independent of this core detail (6.7: payload productType 'digital'; 6.6: state 'is-download'). #}
+        {% set xl0gIsDigital = lineItem.payload.productType|default(null) == 'digital' or 'is-download' in lineItem.states|default([]) %}
         {% set xl0gProductShippingMethod = lineItem.payload.customFields[constant('Xl0g\\DeliveryPromise\\Service\\ShippingMethodResolver::PRODUCT_CUSTOM_FIELD_NAME')] ?? null %}
 
         {# Excluded shipping methods (config): an item with an excluded product shipping method ⇒ the

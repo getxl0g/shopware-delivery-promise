@@ -17,7 +17,8 @@
                   its delivery time range). Products that cannot be delivered and have no delivery
                   time render nothing, as in the core.
 
-   Digital products (downloads) are excluded in both branches: xl0g promises a physical delivery
+   Digital products (downloads) are excluded in both branches (6.7: product.type 'digital'; 6.6 has no product type,
+   there the state 'is-download' marks them — no constant, it does not exist in 6.6): xl0g promises a physical delivery
    date (shipping + transit) that does not apply to a download — they keep Shopware's standard
    display (the core "available" branch includes them without a stock check).
 
@@ -45,7 +46,7 @@
 {% endblock %}
 
 {% block component_delivery_information_available %}
-    {% set xl0gIsDigitalProduct = product.type == constant('Shopware\\Core\\Content\\Product\\ProductDefinition::TYPE_DIGITAL') %}
+    {% set xl0gIsDigitalProduct = product.type|default(null) == 'digital' or 'is-download' in product.states|default([]) %}
     {% set xl0gProductShippingMethod = product.translated.customFields[constant('Xl0g\\DeliveryPromise\\Service\\ShippingMethodResolver::PRODUCT_CUSTOM_FIELD_NAME')] ?? null %}
 
     {# Excluded shipping methods (config): an excluded product shipping method ⇒ Shopware/theme
@@ -71,7 +72,7 @@
 
     {# Availability condition of the core "available" branch without the part "and product.deliveryTime",
        and without the digital case (see above). #}
-    {% set xl0gIsDigitalProduct = product.type == constant('Shopware\\Core\\Content\\Product\\ProductDefinition::TYPE_DIGITAL') %}
+    {% set xl0gIsDigitalProduct = product.type|default(null) == 'digital' or 'is-download' in product.states|default([]) %}
     {% set xl0gIsAvailable = not xl0gIsDigitalProduct and product.stock >= product.minPurchase %}
     {% set xl0gProductShippingMethod = product.translated.customFields[constant('Xl0g\\DeliveryPromise\\Service\\ShippingMethodResolver::PRODUCT_CUSTOM_FIELD_NAME')] ?? null %}
 
