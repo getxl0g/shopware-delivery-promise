@@ -12,7 +12,7 @@ class AgentDiscoveryBuilderTest extends TestCase
 {
     public function testManifestContainsShopUrlAndSignals(): void
     {
-        $m = (new AgentDiscoveryBuilder())->manifest('https://shop.example', true);
+        $m = (new AgentDiscoveryBuilder())->manifest('https://shop.example', true, false);
 
         self::assertSame('xl0g-agent-discovery', $m['protocol']);
         self::assertSame('https://shop.example', $m['shop']['url']);
@@ -23,7 +23,7 @@ class AgentDiscoveryBuilderTest extends TestCase
 
     public function testManifestIsJsonSerializable(): void
     {
-        $json = json_encode((new AgentDiscoveryBuilder())->manifest('https://shop.example', true));
+        $json = json_encode((new AgentDiscoveryBuilder())->manifest('https://shop.example', true, false));
 
         self::assertIsString($json);
         self::assertStringContainsString('xl0g-agent-discovery', $json);
@@ -31,7 +31,7 @@ class AgentDiscoveryBuilderTest extends TestCase
 
     public function testLlmsTxtMentionsSitemapAndWellKnown(): void
     {
-        $txt = (new AgentDiscoveryBuilder())->llmsTxt('https://shop.example', true);
+        $txt = (new AgentDiscoveryBuilder())->llmsTxt('https://shop.example', true, false);
 
         self::assertStringContainsString('https://shop.example/sitemap.xml', $txt);
         self::assertStringContainsString('https://shop.example/.well-known/xl0g-delivery.json', $txt);
@@ -44,7 +44,7 @@ class AgentDiscoveryBuilderTest extends TestCase
      */
     public function testManifestPromisesNoFieldsWhenJsonLdDisabled(): void
     {
-        $m = (new AgentDiscoveryBuilder())->manifest('https://shop.example', false);
+        $m = (new AgentDiscoveryBuilder())->manifest('https://shop.example', false, false);
 
         self::assertSame([], $m['delivery_intelligence']['signals']);
         self::assertStringNotContainsString('x-xl0g-delivery-date', json_encode($m['delivery_intelligence']['signals']));
@@ -56,7 +56,7 @@ class AgentDiscoveryBuilderTest extends TestCase
 
     public function testLlmsTxtNamesNoFieldsWhenJsonLdDisabled(): void
     {
-        $txt = (new AgentDiscoveryBuilder())->llmsTxt('https://shop.example', false);
+        $txt = (new AgentDiscoveryBuilder())->llmsTxt('https://shop.example', false, false);
 
         self::assertStringNotContainsString('x-xl0g-delivery-date', $txt);
         self::assertStringNotContainsString('x-xl0g-cutoff-at', $txt);
@@ -73,8 +73,28 @@ class AgentDiscoveryBuilderTest extends TestCase
     {
         $b = new AgentDiscoveryBuilder();
 
-        self::assertStringContainsString('deliberately carry none', $b->manifest('https://shop.example', true)['delivery_intelligence']['where']);
-        self::assertStringContainsString('only while an order cutoff applies', $b->manifest('https://shop.example', true)['delivery_intelligence']['where']);
-        self::assertStringContainsString('deliberately carry none', $b->llmsTxt('https://shop.example', true));
+        self::assertStringContainsString('deliberately carry none', $b->manifest('https://shop.example', true, false)['delivery_intelligence']['where']);
+        self::assertStringContainsString('only while an order cutoff applies', $b->manifest('https://shop.example', true, false)['delivery_intelligence']['where']);
+        self::assertStringContainsString('deliberately carry none', $b->llmsTxt('https://shop.example', true, false));
+    }
+
+    /**
+     * With Shopware's own product JSON-LD the plugin writes no x-xl0g-* fields — the manifest must not announce them,
+     * but name what is there: handlingTime + transitTime with minValue = maxValue.
+     */
+    public function testCoreJsonLdAnnouncesShippingTimesInsteadOfExtraFields(): void
+    {
+        $b = new AgentDiscoveryBuilder();
+        $m = $b->manifest('https://shop.example', true, true);
+        $txt = $b->llmsTxt('https://shop.example', true, true);
+
+        self::assertSame(['https://schema.org/OfferShippingDetails'], $m['delivery_intelligence']['signals']);
+        self::assertStringContainsString('handlingTime and transitTime', $m['delivery_intelligence']['where']);
+        self::assertStringContainsString('no x-xl0g-* fields', $m['delivery_intelligence']['where']);
+        self::assertStringNotContainsString('x-xl0g-delivery-date', $txt);
+        self::assertStringContainsString('minValue = maxValue', $txt);
+        // Switched off stays switched off, core or not.
+        self::assertSame([], $b->manifest('https://shop.example', false, true)['delivery_intelligence']['signals']);
+        self::assertStringContainsString('does not expose', $b->llmsTxt('https://shop.example', false, true));
     }
 }

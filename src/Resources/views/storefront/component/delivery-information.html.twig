@@ -1,0 +1,89 @@
+{% sw_extends '@Storefront/storefront/component/delivery-information.html.twig' %}
+
+{# xl0g delivery promise on the product detail page (switch deliveryPromiseProductPage).
+
+   Shopware's delivery-information.html.twig decides in an if/elseif chain BEFORE our blocks which
+   branch renders. The "available" branch (block …_available) requires, besides availability, a
+   maintained Shopware delivery time (product.deliveryTime). Products without a delivery time end up
+   in the empty else branch (block …_default) — yet exactly for them the delivery time should come
+   from xl0g. That is why the widget hooks into BOTH blocks (additive, the core chain stays untouched):
+
+   - …_available  Shopware condition met (available AND delivery time) ⇒ widget; Shopware's
+                  delivery time text stays the fallback (empty API answer ⇒ the buyer still sees it).
+   - …_default    no Shopware delivery time ⇒ widget only if the core's availability condition holds
+                  without the delivery time: stock >= minimum purchase. The fallback is whatever the
+                  predecessors in the template stack render (core: nothing ⇒ the widget stays hidden
+                  without a date and the JS shows it once a date arrives; Commercial ProductBundles:
+                  its delivery time range). Products that cannot be delivered and have no delivery
+                  time render nothing, as in the core.
+
+   Digital products (downloads) are excluded in both branches: xl0g promises a physical delivery
+   date (shipping + transit) that does not apply to a download — they keep Shopware's standard
+   display (the core "available" branch includes them without a stock check).
+
+   The plugin's own fallback JSON-LD block (no SEO plugin markup, no core JSON-LD) hangs on the outer
+   block and is therefore independent of the availability switch. #}
+
+{% block component_delivery_information %}
+    {{ parent() }}
+
+    {# With core JSON-LD active, the extension carries only the date (key promise) instead of jsonLd,
+       for the override layout/structured-data/json-ld-product.html.twig — then nothing here. #}
+    {% set xl0gFallbackJsonLd = (page.extensions.xl0gShippingDetails is defined and page.extensions.xl0gShippingDetails)
+        ? page.extensions.xl0gShippingDetails.get('jsonLd')
+        : null %}
+    {% if xl0gFallbackJsonLd %}
+        <script type="application/ld+json">{{ xl0gFallbackJsonLd|raw }}</script>
+    {% endif %}
+
+    {# Page view beacon (switch “Report page views to xl0g”): one sendBeacon per view in the browser — on every product
+       page, independent of the availability switch and of the widget, and also on pages from the HTTP cache. The
+       server counts browsers only; agents are counted when the page is generated. #}
+    {% if config('Xl0gDeliveryPromise.config.reportPageViews') and product.productNumber|default %}
+        <span hidden data-xl0g-page-view data-endpoint="{{ path('frontend.xl0g.page_view') }}" data-sku="{{ product.productNumber }}"></span>
+    {% endif %}
+{% endblock %}
+
+{% block component_delivery_information_available %}
+    {% set xl0gIsDigitalProduct = product.type == constant('Shopware\\Core\\Content\\Product\\ProductDefinition::TYPE_DIGITAL') %}
+    {% set xl0gProductShippingMethod = product.translated.customFields[constant('Xl0g\\DeliveryPromise\\Service\\ShippingMethodResolver::PRODUCT_CUSTOM_FIELD_NAME')] ?? null %}
+
+    {# Excluded shipping methods (config): an excluded product shipping method ⇒ Shopware/theme
+       standard display; xl0g is not asked at all (no server-side call, no widget, no JS). #}
+    {% if config('Xl0gDeliveryPromise.config.deliveryPromiseProductPage')
+        and not xl0gIsDigitalProduct
+        and not xl0g_is_shipping_method_excluded(context, xl0gProductShippingMethod) %}
+        {% set xl0gFallbackHtml %}{{ parent() }}{% endset %}
+        {% sw_include '@Xl0gDeliveryPromise/storefront/component/xl0g/delivery-promise-widget-product.html.twig' with {
+            xl0gProductShippingMethod: xl0gProductShippingMethod,
+            xl0gFallback: xl0gFallbackHtml
+        } %}
+    {% else %}
+        {{ parent() }}
+    {% endif %}
+{% endblock %}
+
+{% block component_delivery_information_default %}
+    {# parent() first: predecessors in the stack (core: empty; ProductBundles renders its range here) —
+       trimmed, so that mere block whitespace does not count as fallback content. #}
+    {% set xl0gFallbackHtml %}{{ parent() }}{% endset %}
+    {% set xl0gFallbackHtml = xl0gFallbackHtml|trim %}
+
+    {# Availability condition of the core "available" branch without the part "and product.deliveryTime",
+       and without the digital case (see above). #}
+    {% set xl0gIsDigitalProduct = product.type == constant('Shopware\\Core\\Content\\Product\\ProductDefinition::TYPE_DIGITAL') %}
+    {% set xl0gIsAvailable = not xl0gIsDigitalProduct and product.stock >= product.minPurchase %}
+    {% set xl0gProductShippingMethod = product.translated.customFields[constant('Xl0g\\DeliveryPromise\\Service\\ShippingMethodResolver::PRODUCT_CUSTOM_FIELD_NAME')] ?? null %}
+
+    {# Excluded shipping methods (config): as in the "available" branch — standard display instead of xl0g. #}
+    {% if xl0gIsAvailable
+        and config('Xl0gDeliveryPromise.config.deliveryPromiseProductPage')
+        and not xl0g_is_shipping_method_excluded(context, xl0gProductShippingMethod) %}
+        {% sw_include '@Xl0gDeliveryPromise/storefront/component/xl0g/delivery-promise-widget-product.html.twig' with {
+            xl0gProductShippingMethod: xl0gProductShippingMethod,
+            xl0gFallback: xl0gFallbackHtml
+        } %}
+    {% else %}
+        {{ xl0gFallbackHtml|raw }}
+    {% endif %}
+{% endblock %}

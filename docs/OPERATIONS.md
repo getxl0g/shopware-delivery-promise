@@ -21,7 +21,7 @@ At the top of the config dialog **choose the channel**, then per channel:
 
 ### Texts
 - Adapt the snippets (`xl0g.deliveryPromise.*`) per sales channel/language to the brand in the shop’s snippet editor.
-  **Do not remove the placeholders `{date}` / `{countdown}`** (otherwise the number is missing).
+  **Do not remove the placeholders `{date}`, `{hours}`, `{minutes}`** (otherwise the number is missing).
 
 ## 2 · Use (good practice)
 - **Test one shop completely first**, then roll out the rest with the same configuration.

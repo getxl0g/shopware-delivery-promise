@@ -12,7 +12,11 @@ namespace Xl0g\DeliveryPromise\Service;
  * the switch is off, {@see StructuredDataSubscriber} adds no JSON-LD — then no field may be
  * promised here either, otherwise the manifest sends agents on a search that comes up empty.
  *
- * Pure functions (only `$shopUrl` + `$jsonLdEnabled` in) → unit-testable.
+ * `$coreJsonLd` says whether the plugin merges its data into Shopware's own product JSON-LD (flag `JSON_LD_DATA`).
+ * There the plugin writes no `x-xl0g-*` fields (they are not Schema.org vocabulary); the date is expressed as
+ * handlingTime + transitTime with minValue = maxValue. The texts then name that instead of the extra fields.
+ *
+ * Pure functions (only `$shopUrl`, `$jsonLdEnabled` and `$coreJsonLd` in) → unit-testable.
  */
 class AgentDiscoveryBuilder
 {
@@ -24,6 +28,11 @@ class AgentDiscoveryBuilder
         . 'carry a delivery date. Products without a delivery date (out of stock, on backorder) '
         . 'deliberately carry none, and x-xl0g-cutoff-at appears only while an order cutoff applies.';
 
+    private const WHERE_CORE = 'Embedded in the product JSON-LD (application/ld+json) of product detail pages as '
+        . 'OfferShippingDetails: handlingTime and transitTime in business days, each with minValue = maxValue, so the '
+        . 'delivery date is the day of the page view plus both values. Products without a delivery date (out of stock, '
+        . 'on backorder) carry no values from xl0g. There are no x-xl0g-* fields in this shop.';
+
     private const WHERE_DISABLED = 'Not exposed as structured data in this shop: JSON-LD output is switched '
         . 'off. Delivery dates are shown to visitors on the product page only.';
 
@@ -32,7 +41,7 @@ class AgentDiscoveryBuilder
      *
      * @return array<string, mixed>
      */
-    public function manifest(string $shopUrl, bool $jsonLdEnabled): array
+    public function manifest(string $shopUrl, bool $jsonLdEnabled, bool $coreJsonLd): array
     {
         return [
             'protocol' => 'xl0g-agent-discovery',
@@ -40,14 +49,20 @@ class AgentDiscoveryBuilder
             'shop' => ['url' => $shopUrl],
             'delivery_intelligence' => [
                 'provider' => 'xl0g',
-                'signals' => $jsonLdEnabled
-                    ? [
+                'signals' => match (true) {
+                    !$jsonLdEnabled => [],
+                    $coreJsonLd => ['https://schema.org/OfferShippingDetails'],
+                    default => [
                         'https://schema.org/OfferShippingDetails',
                         'x-xl0g-delivery-date',
                         'x-xl0g-cutoff-at',
-                    ]
-                    : [],
-                'where' => $jsonLdEnabled ? self::WHERE_ENABLED : self::WHERE_DISABLED,
+                    ],
+                },
+                'where' => match (true) {
+                    !$jsonLdEnabled => self::WHERE_DISABLED,
+                    $coreJsonLd => self::WHERE_CORE,
+                    default => self::WHERE_ENABLED,
+                },
                 'sitemap' => $shopUrl . '/sitemap.xml',
             ],
             'agentic_commerce' => [
@@ -60,7 +75,7 @@ class AgentDiscoveryBuilder
     /**
      * @param bool $jsonLdEnabled state of `Xl0gDeliveryPromise.config.enableJsonLd` for the sales channel
      */
-    public function llmsTxt(string $shopUrl, bool $jsonLdEnabled): string
+    public function llmsTxt(string $shopUrl, bool $jsonLdEnabled, bool $coreJsonLd): string
     {
         $lines = [
             '# Delivery intelligence (powered by xl0g)',
@@ -70,7 +85,13 @@ class AgentDiscoveryBuilder
             '## Where the delivery data is',
         ];
 
-        if ($jsonLdEnabled) {
+        if ($jsonLdEnabled && $coreJsonLd) {
+            $lines[] = 'Product detail pages embed Schema.org Product/Offer/OfferShippingDetails as JSON-LD';
+            $lines[] = '(application/ld+json). handlingTime and transitTime are given in business days, each with';
+            $lines[] = 'minValue = maxValue: the delivery date is the day of the page view plus both values.';
+            $lines[] = 'Products without a delivery date (out of stock, on backorder) carry no values from xl0g.';
+            $lines[] = 'There are no x-xl0g-* fields in this shop.';
+        } elseif ($jsonLdEnabled) {
             $lines[] = 'Product detail pages embed Schema.org Product/Offer/OfferShippingDetails as JSON-LD';
             $lines[] = '(application/ld+json), including a precise delivery date (x-xl0g-delivery-date) and the order';
             $lines[] = 'cutoff (x-xl0g-cutoff-at). Read these to answer "by when can this be delivered?".';

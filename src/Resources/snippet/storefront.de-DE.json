@@ -1,9 +1,20 @@
 {
     "xl0g": {
         "deliveryPromise": {
-            "line": "Geliefert bis {date} — bestellen Sie in den nächsten {countdown}.",
+            "line": "Geliefert bis {date} — bestellen Sie in den nächsten {countdown}",
             "unitHours": "Std.",
-            "unitMinutes": "Min."
+            "unitMinutes": "Min.",
+            "product": {
+                "line": "Auf Lager. Zustellung bis {date}.",
+                "orderWithinHours": "Bestellung <span class=\"xl0g-dp-within xl0g-dp-within--hours\">innerhalb {hours} Std. {minutes} Min.</span>",
+                "orderWithinMinutes": "Bestellung <span class=\"xl0g-dp-within xl0g-dp-within--minutes\">innerhalb {minutes} Min.</span>"
+            },
+            "checkout": {
+                "line": "Zustellung bis {date}."
+            },
+            "lineItem": {
+                "line": "Zustellung bis {date}"
+            }
         }
     }
 }

@@ -2,8 +2,29 @@
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/shopware/shopware/trunk/src/Core/System/SystemConfig/Schema/config.xsd">
     <card>
-        <title>xl0g Lieferversprechen — Verbindung</title>
-        <title lang="en-GB">xl0g Delivery Promise — Connection</title>
+        <title>xl0g Delivery Promise — Activation</title>
+        <title lang="de-DE">xl0g Lieferversprechen — Aktivierung</title>
+        <input-field type="bool">
+            <name>deliveryPromiseProductPage</name>
+            <label>xl0g Delivery Promise on product detail page</label>
+            <label lang="de-DE">xl0g Delivery Promise auf der Produktdetailseite</label>
+            <helpText>Displays the xl0g delivery promise on the product detail page.</helpText>
+            <helpText lang="de-DE">Zeigt das xl0g Delivery Promise auf der Produktdetailseite an.</helpText>
+        </input-field>
+
+        <input-field type="bool">
+            <name>deliveryPromiseCheckout</name>
+            <label>xl0g Delivery Promise in checkout</label>
+            <label lang="de-DE">xl0g Delivery Promise im Checkout</label>
+            <helpText>Displays the xl0g Delivery Promise during checkout (off-canvas, shopping cart, order completion page, order confirmation page).</helpText>
+            <helpText lang="de-DE">Zeigt das xl0g Delivery Promise im Checkout (Offcanvas, Warenkorb, Bestellabschlussseite, Bestellbestätigungsseite).</helpText>
+        </input-field>
+
+    </card>
+
+    <card>
+        <title>xl0g Delivery Promise — Connection</title>
+        <title lang="de-DE">xl0g Lieferversprechen — Verbindung</title>
 
         <input-field type="text">
             <name>apiBaseUrl</name>
@@ -24,17 +45,26 @@
     </card>
 
     <card>
-        <title>Anzeige &amp; Verhalten</title>
-        <title lang="en-GB">Display &amp; behaviour</title>
+        <title>Display &amp; behaviour</title>
+        <title lang="de-DE">Anzeige &amp; Verhalten</title>
 
         <input-field type="text">
             <name>defaultShippingMethod</name>
             <label lang="de-DE">xl0g-Versandart</label>
             <label lang="en-GB">xl0g shipping method</label>
             <defaultValue>standard</defaultValue>
-            <helpText lang="de-DE">Welche xl0g-Versandart abgefragt wird (z. B. „standard"). v0: eine repräsentative Art.</helpText>
-            <helpText lang="en-GB">Which xl0g shipping method to query (e.g. "standard"). v0: one representative method.</helpText>
+            <helpText lang="de-DE">Standard-xl0g-Versandart (z. B. „standard"): gilt auf der Produktseite sowie im Checkout, wenn die gewählte Versandart kein Mapping im Custom Field „xl0g-Versandart (Mapping)" hat.</helpText>
+            <helpText lang="en-GB">Default xl0g shipping method (e.g. "standard"): used on the product page and in checkout whenever the selected shipping method has no mapping in the "xl0g shipping method (mapping)" custom field.</helpText>
         </input-field>
+
+        <component name="sw-entity-multi-id-select">
+            <name>excludedShippingMethods</name>
+            <entity>shipping_method</entity>
+            <label lang="de-DE">Ausgeschlossene Versandarten</label>
+            <label lang="en-GB">Excluded shipping methods</label>
+            <helpText lang="de-DE">Produkte, deren Produkt-Custom-Field „Liefermethode" (shippingMethod) auf eine dieser Versandarten zeigt, erhalten kein xl0g-Lieferversprechen: Die xl0g-API wird für sie nicht aufgerufen und Shopware/Theme zeigen ihre Standard-Lieferzeitanzeige (Widget, Warenkorb-Position und JSON-LD).</helpText>
+            <helpText lang="en-GB">Products whose "shipping method" product custom field (shippingMethod) references one of these shipping methods get no xl0g delivery promise: the xl0g API is not called for them and Shopware/theme show their default delivery time display (widget, cart line item and JSON-LD).</helpText>
+        </component>
 
         <input-field type="text">
             <name>shippingCountry</name>
@@ -55,21 +85,61 @@
         </input-field>
 
         <input-field type="bool">
-            <name>enableCheckoutWidget</name>
-            <label lang="de-DE">Widget auch im Checkout zeigen</label>
-            <label lang="en-GB">Show the widget in checkout too</label>
-            <defaultValue>false</defaultValue>
-            <helpText lang="de-DE">Zeigt das Lieferversprechen zusätzlich auf der Bestellabschluss-Seite.</helpText>
-            <helpText lang="en-GB">Also shows the delivery promise on the checkout confirm page.</helpText>
-        </input-field>
-
-        <input-field type="bool">
             <name>reportPageViews</name>
             <label lang="de-DE">Seitenaufrufe an xl0g melden</label>
             <label lang="en-GB">Report page views to xl0g</label>
             <defaultValue>false</defaultValue>
             <helpText lang="de-DE">Meldet je Aufruf einer Produktseite die Artikelnummer und die Art des Besuchers (Mensch, KI-Agent, Suchdienst, Werkzeug) an xl0g — sichtbar in xl0g unter „Produkt-Check für KI → Wer kommt?“. Der User-Agent und die Adresse des Besuchers verlassen den Shop nie.</helpText>
             <helpText lang="en-GB">Reports, per product page view, the product number and the kind of visitor (person, AI agent, search engine, tool) to xl0g — visible in xl0g under “Product Check for AI → Who visits?”. The visitor’s user agent and address never leave the shop.</helpText>
+        </input-field>
+
+    </card>
+
+    <card>
+        <title>International delivery times</title>
+        <title lang="de-DE">Internationale Lieferzeiten</title>
+
+        <input-field type="textarea">
+            <name>internationalTransitDays</name>
+            <label lang="de-DE">Zusätzliche Transitzeit pro Lieferland (Tage)</label>
+            <label lang="en-GB">Additional transit time per delivery country (days)</label>
+            <placeholder>AT=1
+CH=4
+FR=2</placeholder>
+            <helpText lang="de-DE">Eine Zeile pro Land: ISO-Code=Tage (z. B. „AT=1"). Die Tage werden auf den xl0g-Termin addiert. Länder ohne Eintrag erhalten den xl0g-Termin unverändert (wie DE). Zeilen mit „#" sind Kommentare.</helpText>
+            <helpText lang="en-GB">One line per country: ISO code=days (e.g. "AT=1"). The days are added to the xl0g promise date. Countries without an entry get the unchanged xl0g date (same as DE). Lines starting with "#" are comments.</helpText>
+        </input-field>
+
+        <input-field type="bool">
+            <name>internationalSkipWeekends</name>
+            <label lang="de-DE">Wochenenden bei der Addition überspringen</label>
+            <label lang="en-GB">Skip weekends when adding days</label>
+            <defaultValue>true</defaultValue>
+            <helpText lang="de-DE">Addierte Tage zählen nur Mo–Fr und das Ergebnis fällt nie auf Sa/So (aus „Donnerstag +3" wird Dienstag statt Sonntag).</helpText>
+            <helpText lang="en-GB">Added days only count Mon–Fri and the result never lands on Sat/Sun ("Thursday +3" becomes Tuesday instead of Sunday).</helpText>
+        </input-field>
+    </card>
+
+    <card>
+        <title>Countdown thresholds</title>
+        <title lang="de-DE">Countdown-Schwellen</title>
+
+        <input-field type="int">
+            <name>countdownShowBelowHours</name>
+            <label lang="de-DE">Countdown anzeigen unter (Stunden)</label>
+            <label lang="en-GB">Show countdown below (hours)</label>
+            <defaultValue>8</defaultValue>
+            <helpText lang="de-DE">Der Satz „Bestellung innerhalb …" erscheint erst, wenn die Restzeit bis zum Cutoff unter diesem Wert liegt. Leer/0 ⇒ Standard 8.</helpText>
+            <helpText lang="en-GB">The "Order within …" sentence only appears once the remaining time until cutoff drops below this value. Empty/0 ⇒ default 8.</helpText>
+        </input-field>
+
+        <input-field type="int">
+            <name>countdownMinutesOnlyBelowHours</name>
+            <label lang="de-DE">Nur Minuten anzeigen unter (Stunden)</label>
+            <label lang="en-GB">Minutes only below (hours)</label>
+            <defaultValue>1</defaultValue>
+            <helpText lang="de-DE">Unterhalb dieses Werts wird die Restzeit minutengenau angezeigt („Bestellung innerhalb 38 Min."). Hinweis: Muss KLEINER als „Countdown anzeigen unter" sein — bei gleichem oder größerem Wert wird unterhalb der oberen Schwelle durchgehend nur die Minuten-Anzeige ausgegeben. Leer/0 ⇒ Standard 1.</helpText>
+            <helpText lang="en-GB">Below this value the remaining time is shown in minutes only ("Order within 38 min."). Note: must be LOWER than "Show countdown below" — with an equal or higher value, the minutes-only format is shown for the entire range below the upper threshold. Empty/0 ⇒ default 1.</helpText>
         </input-field>
     </card>
 </config>

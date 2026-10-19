@@ -9,7 +9,7 @@
 #   1. plugin:install --activate runs through
 #   2. theme:compile runs through (Twig extensions and snippets are loaded)
 #   3. the product page answers 200 and carries the widget placeholder (data-xl0g-delivery-promise)
-#   4. /llms.txt 200 and /.well-known/xl0g-delivery.json 200 with valid JSON
+#   4. the page view beacon route answers 204; /llms.txt 200 and /.well-known/xl0g-delivery.json 200 with valid JSON
 #   5. the plugin's unit tests (PHPUnit) run green
 #   6. only if XL0G_TEST_API_URL and XL0G_TEST_API_KEY are set (a test access with promise:read only, kept outside the
 #      repository): the product page carries x-xl0g-delivery-date in its JSON-LD and /xl0g/delivery-promise answers
@@ -110,6 +110,8 @@ CUR="$(api -X POST "$URL/api/search/currency" -d '{"limit":1,"filter":[{"type":"
 SC="$(api -X POST "$URL/api/search/sales-channel" -d '{"limit":1,"filter":[{"type":"equals","field":"typeId","value":"8a243080f92e4c719546314b577cf82b"}]}' | first_id)" || red "storefront sales channel"
 PID="$(python3 -c 'import uuid; print(uuid.uuid4().hex)')"
 api -X POST "$URL/api/product" -d "{\"id\":\"$PID\",\"name\":\"Compatibility test product\",\"productNumber\":\"COMPAT-1\",\"stock\":10,\"active\":true,\"taxId\":\"$TAX\",\"price\":[{\"currencyId\":\"$CUR\",\"gross\":19.99,\"net\":16.80,\"linked\":true}],\"visibilities\":[{\"salesChannelId\":\"$SC\",\"visibility\":30}]}" >>"$LOG" 2>&1
+# 0.7.2: the widget is switched on per sales channel (off by default since the server-rendered widget arrived).
+console system:config:set Xl0gDeliveryPromise.config.deliveryPromiseProductPage true || red "switching on the product page widget"
 console cache:clear || red "cache:clear after the test product"
 PDP="$URL/detail/$PID"
 # /detail/<id> redirects (301) to the SEO URL of the product — follow it.
@@ -122,7 +124,10 @@ if [ "$code" != "200" ]; then
 fi
 grep -q 'data-xl0g-delivery-promise' "$WORKDIR/pdp.html" || red "product page without the widget placeholder"
 
-step "4. Invitation to agents"
+step "4. Page view beacon route (answers 204 whatever happens, also with the switch off)"
+[ "$(curl -s -o /dev/null -w '%{http_code}' -X POST -d sku=COMPAT-1 "$URL/xl0g/page-view")" = "204" ] || red "/xl0g/page-view"
+
+step "4b. Invitation to agents"
 [ "$(curl -s -o /dev/null -w '%{http_code}' "$URL/llms.txt")" = "200" ] || red "/llms.txt"
 curl -s "$URL/.well-known/xl0g-delivery.json" | python3 -c 'import sys,json; d=json.load(sys.stdin); assert d.get("protocol")=="xl0g-agent-discovery"' \
     || red "/.well-known/xl0g-delivery.json"
@@ -160,6 +165,10 @@ for b in blocks:
             dates.append(item["x-xl0g-delivery-date"])
 assert dates and re.fullmatch(r"\d{4}-\d{2}-\d{2}", dates[0]), "no delivery date in %d JSON-LD blocks" % len(blocks)
 print("JSON-LD delivery date:", dates[0])
+# 0.7.2: handlingTime from xl0g, exact (minValue = maxValue), next to the transit time.
+times = re.findall(r'"handlingTime":\{[^}]*"minValue":(\d+),"maxValue":(\d+)', html)
+assert times and times[0][0] == times[0][1], "no exact handlingTime from xl0g in the JSON-LD"
+print("JSON-LD handling time:", times[0][0])
 PY
     curl -s "$URL/xl0g/delivery-promise?context=pdp" -H 'X-Requested-With: XMLHttpRequest' \
         | python3 -c 'import sys,json,re; d=json.load(sys.stdin); assert re.fullmatch(r"\d{4}-\d{2}-\d{2}", d.get("promised_date") or ""); print("widget endpoint:", d["promised_date"])' >>"$LOG" 2>&1 \

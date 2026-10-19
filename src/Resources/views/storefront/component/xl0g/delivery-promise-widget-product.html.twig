@@ -1,0 +1,64 @@
+{# Countdown thresholds from the plugin config; empty/0 ⇒ default (identical normalisation in the JS). #}
+{% set xl0gShowCountdownBelowHours = config('Xl0gDeliveryPromise.config.countdownShowBelowHours') %}
+{% set xl0gShowCountdownBelowHours = xl0gShowCountdownBelowHours > 0 ? xl0gShowCountdownBelowHours : 8 %}
+{% set xl0gMinutesOnlyBelowHours = config('Xl0gDeliveryPromise.config.countdownMinutesOnlyBelowHours') %}
+{% set xl0gMinutesOnlyBelowHours = xl0gMinutesOnlyBelowHours > 0 ? xl0gMinutesOnlyBelowHours : 1 %}
+{% set xl0gCountry = context.shippingLocation.country.iso ?? null %}
+{# Shipping method chain: override parameter > product custom field (xl0gProductShippingMethod) > default.
+   If the API does not know the primary shipping method (empty answer), the fallback applies server-side;
+   the JS receives it as data-fallback-shipping-method for the same mechanism. #}
+{% set xl0gMethod = xl0gShippingMethod|default('') ?: xl0g_product_shipping_method(context, xl0gProductShippingMethod|default(null), 'pdp') %}
+{% set xl0gFallbackMethod = xl0g_shipping_method(context, 'pdp') %}
+{% set xl0gResolved = xl0g_delivery_promise_with_fallback(
+    context.salesChannel.id ?? null,
+    xl0gMethod,
+    xl0gFallbackMethod,
+    'pdp',
+    xl0gCountry
+) %}
+{% set xl0gMethod = xl0gResolved.shippingMethod %}
+{% set xl0gPromise = xl0gResolved.promise %}
+<div class="xl0g-delivery-promise xl0g-delivery-promise--product"
+     {% if not xl0gPromise and not xl0gFallback|default %}hidden{% endif %}
+     data-xl0g-delivery-promise
+     data-status-indicator="1"
+     data-endpoint="{{ path('frontend.xl0g.delivery_promise') }}"
+     data-shipping-method="{{ xl0gMethod }}"
+     {% if xl0gFallbackMethod != xl0gMethod %}data-fallback-shipping-method="{{ xl0gFallbackMethod }}"{% endif %}
+     data-context="pdp"
+     data-show-countdown-below-hours="{{ xl0gShowCountdownBelowHours }}"
+     data-minutes-only-below-hours="{{ xl0gMinutesOnlyBelowHours }}"
+     {% if xl0gCountry %}data-country="{{ xl0gCountry }}"{% endif %}
+     {% if xl0gPromise and xl0gPromise.cutoffAt %}data-cutoff-at="{{ xl0gPromise.cutoffAt }}"{% endif %}
+     {# Server date for the JS: with promisedDate and a cutoffAt not yet passed, the fetch is skipped
+        entirely (the server render wins — endpoint caches could be older and overwrite the fresh date);
+        otherwise the pair serves as the basis for comparison against identical re-rendering. #}
+     {% if xl0gPromise %}data-promised-date="{{ xl0gPromise.promisedDate }}"{% endif %}
+     data-template="{{ 'xl0g.deliveryPromise.product.line'|trans|e('html_attr') }}"
+     data-order-within-hours="{{ 'xl0g.deliveryPromise.product.orderWithinHours'|trans|e('html_attr') }}"
+     data-order-within-minutes="{{ 'xl0g.deliveryPromise.product.orderWithinMinutes'|trans|e('html_attr') }}"
+     aria-live="polite">
+    {%- if xl0gPromise -%}
+        {%- set xl0gCd = xl0g_delivery_countdown(xl0gPromise.cutoffAt) -%}
+        {%- set xl0gDateHtml -%}
+            <b class="xl0g-dp-date">{{ xl0gPromise.promisedDate|format_date(pattern='EEEE, d. MMMM') }}</b>
+        {%- endset -%}
+        {# Keep the markup byte-identical to the JS render (_render in the plugin JS): no whitespace
+           between indicator and line (spacing = margin-right of the dot), exactly one space before
+           the countdown span — and the span always in the markup (even empty), so the JS can insert
+           the sentence when the threshold is crossed without re-rendering. -#}
+        <span class="xl0g-status-indicator success"></span>
+        {{- 'xl0g.deliveryPromise.product.line'|trans|e|replace({'{date}': xl0gDateHtml})|raw }} <span class="xl0g-dp-countdown" role="timer" aria-live="off">
+            {#- |raw: the snippets contain the highlighting span; only numbers are replaced. -#}
+            {%- if xl0gCd and xl0gCd.hours < xl0gShowCountdownBelowHours -%}
+                {%- if xl0gCd.hours < xl0gMinutesOnlyBelowHours -%}
+                    {{- 'xl0g.deliveryPromise.product.orderWithinMinutes'|trans|replace({'{minutes}': xl0gCd.minutes})|raw -}}
+                {%- else -%}
+                    {{- 'xl0g.deliveryPromise.product.orderWithinHours'|trans|replace({'{hours}': xl0gCd.hours, '{minutes}': xl0gCd.minutes})|raw -}}
+                {%- endif -%}
+            {%- endif -%}
+        </span>
+    {%- elseif xl0gFallback|default -%}
+        {{ xl0gFallback|raw }}
+    {%- endif -%}
+</div>

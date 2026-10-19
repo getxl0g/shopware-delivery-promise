@@ -3,7 +3,18 @@
         "deliveryPromise": {
             "line": "Delivered by {date} — order within the next {countdown}.",
             "unitHours": "hrs",
-            "unitMinutes": "min"
+            "unitMinutes": "min",
+            "product": {
+                "line": "In stock. Delivery by {date}.",
+                "orderWithinHours": "Order <span class=\"xl0g-dp-within xl0g-dp-within--hours\">within {hours} hrs {minutes} min.</span>",
+                "orderWithinMinutes": "Order <span class=\"xl0g-dp-within xl0g-dp-within--minutes\">within {minutes} min.</span>"
+            },
+            "checkout": {
+                "line": "Delivery by {date}."
+            },
+            "lineItem": {
+                "line": "Delivery by {date}"
+            }
         }
     }
 }

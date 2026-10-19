@@ -9,6 +9,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Xl0g\DeliveryPromise\Service\AgentDiscoveryBuilder;
 use Xl0g\DeliveryPromise\Service\Xl0gPromiseClient;
+use Xl0g\DeliveryPromise\Storefront\Subscriber\StructuredDataSubscriber;
 
 /**
  * B5: Agent-Discovery — `GET /llms.txt` + `GET /.well-known/xl0g-delivery.json`.
@@ -18,7 +19,8 @@ use Xl0g\DeliveryPromise\Service\Xl0gPromiseClient;
  * no API key). The content comes from the {@see AgentDiscoveryBuilder}.
  *
  * Both routes report the ACTUAL state of this sales channel's JSON-LD switch. If it is
- * off, the manifest does not announce fields the shop does not deliver.
+ * off, the manifest does not announce fields the shop does not deliver; with Shopware's own product JSON-LD it names
+ * handlingTime + transitTime instead of the x-xl0g-* fields, which the plugin does not write there.
  */
 #[Route(defaults: ['_routeScope' => ['storefront']])]
 class DiscoveryController extends StorefrontController
@@ -33,7 +35,7 @@ class DiscoveryController extends StorefrontController
     public function llmsTxt(Request $request): Response
     {
         return new Response(
-            $this->builder->llmsTxt($request->getSchemeAndHttpHost(), $this->jsonLdEnabled($request)),
+            $this->builder->llmsTxt($request->getSchemeAndHttpHost(), $this->jsonLdEnabled($request), StructuredDataSubscriber::isCoreJsonLdActive()),
             Response::HTTP_OK,
             ['Content-Type' => 'text/plain; charset=utf-8']
         );
@@ -43,7 +45,7 @@ class DiscoveryController extends StorefrontController
     public function wellKnown(Request $request): JsonResponse
     {
         return new JsonResponse(
-            $this->builder->manifest($request->getSchemeAndHttpHost(), $this->jsonLdEnabled($request))
+            $this->builder->manifest($request->getSchemeAndHttpHost(), $this->jsonLdEnabled($request), StructuredDataSubscriber::isCoreJsonLdActive())
         );
     }
 

@@ -1,0 +1,40 @@
+/*
+xl0g Delivery Promise — storefront styles.
+Included automatically by Shopware's theme compilation (convention: src/scss/base.scss).
+*/
+
+// Status dot before the delivery statement (product page): green = deliverable/in stock.
+.xl0g-status-indicator.success {
+    background-color: #00A777 !important;
+    border-radius: 100%;
+    background-clip: padding-box;
+    display: inline-block;
+    height: 10px;
+    line-height: 10px;
+    margin-right: 5px;
+    position: relative;
+    width: 10px;
+}
+
+.xl0g-delivery-promise--checkout,
+.xl0g-delivery-promise--line-item {
+    font-size: 0.875rem;
+}
+
+
+
+.xl0g-delivery-promise--product {
+    margin-bottom: 1rem;
+}
+
+// Highlighting of the "within …" part in the order countdown (the spans come from the
+// orderWithinHours/orderWithinMinutes snippets): hours + minutes = green, minutes only = red.
+.xl0g-dp-within {
+    &--hours {
+        color: var(--sw-color-success);
+    }
+
+    &--minutes {
+        color: var(--sw-color-danger);
+    }
+}

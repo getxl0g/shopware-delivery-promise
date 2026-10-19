@@ -2,6 +2,40 @@
 
 All notable changes to this plugin. Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.7.2] — unreleased — Server-rendered widget, cutoff-aware caches, one JSON-LD block per page, shipping methods
+
+- **Server-rendered widget, no layout shift.** The date is rendered with the page from the object cache; the JS only
+  runs the countdown. While the server date is valid, the widget sends no request, so a cached endpoint can never
+  overwrite a fresh date; identical values leave the DOM untouched.
+- **The widget sits in Shopware's delivery information** (`component/delivery-information.html.twig`, included by the
+  buy widget in 6.6 and 6.7), also for products without a Shopware delivery time; digital products are excluded.
+  Switched on per sales channel: “xl0g Delivery Promise on product detail page” and “… in checkout” (both off by
+  default — **upgrade note:** switch them on after updating from 0.7.0 or 0.7.1).
+- **Delivery date per cart line item** (offcanvas, cart, confirm page), with a pre-order line for restock items.
+- **Resilience:** object cache (success 300 s, failure 90 s), connect timeout 1.5 s, total 2 s, logging channel
+  `xl0g_delivery_promise`; every cache layer (object cache, endpoint `max-age`, the page's `s-maxage`) expires at the
+  order cutoff, and the first refetch after the cutoff comes after 5 s plus jitter.
+- **One JSON-LD Product block per page:** injected into an SEO plugin's markup (DreiSC SEO Pro), merged into Shopware's
+  own JSON-LD (flag `JSON_LD_DATA`, without `x-xl0g-*` fields there), or an own block with closeout-aware availability.
+- **Handling time from xl0g:** with a ship date from xl0g, the JSON-LD carries `handlingTime` = business days until the
+  ship date next to the exact `transitTime` (each minValue = maxValue), in all three modes. A handling time from the
+  Shopware delivery time (e.g. 1–3 days) is replaced: before, search engines read a range of several days while the page
+  showed one date.
+- **Shipping methods:** xl0g shipping method per selected Shopware shipping method (custom field, created on install)
+  and per product (product custom field), with a fallback when the API does not know it; **excluded shipping methods**
+  (e.g. freight) keep Shopware's display and do not call xl0g.
+- **Other delivery countries:** additional transit days per country, weekends skipped.
+- **Countdown thresholds** in the config, status dot, highlighted “within …” part; the countdown stays a silent timer
+  for screen readers.
+- **Report page views to xl0g, rebuilt for the server-rendered widget** (switch `reportPageViews`, off by default):
+  browsers are counted by a small beacon on every product page (`POST /xl0g/page-view`, browsers only), agents, search
+  engines and tools when the page is generated (separate short request, bypassing the cache). Every visit counts once;
+  for agents the number stays a lower bound. The user agent never leaves the shop.
+- **Invitation to agents with Shopware's own JSON-LD** names handlingTime + transitTime instead of `x-xl0g-*` fields,
+  which the plugin does not write there.
+- **Supported Shopware versions:** 6.7 and 6.6, each tested with `scripts/compatibility.sh`; the test switches the
+  widget on, checks the beacon route and — with a test access — the handling time in the JSON-LD.
+
 ## [0.7.1] — 2026-10-19 — Widget on standard Shopware 6.6/6.7 product pages; Shopware 6.6 supported; English only
 - **Fix: the widget and the JSON-LD now appear on a standard Shopware 6.6/6.7 product page.** Since the buy box became
   the `buy-widget` component, the block `page_product_detail_buy_container` of `page/product-detail/index.html.twig` is no

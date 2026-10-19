@@ -1,0 +1,54 @@
+{# xl0g Delivery Promise — compact line item variant (offcanvas, cart, confirm page).
+
+   Shows only the date line per item ("Delivery by {date}") — deliberately without countdown and
+   status indicator (the countdown is reserved for the summary widget). The shared JS plugin works
+   unchanged: with a valid server date (data-promised-date/-cutoff-at) it does not fetch at all; if it
+   does render (no date or cutoff passed), the countdown span simply stays empty without the
+   data-order-within-* attributes.
+
+   Parameters:
+   - xl0gProductShippingMethod value from the product custom field (shipping method per product);
+                               empty/invalid ⇒ mapping of the selected shipping method/default
+   - xl0gFallback              optional HTML (Shopware's line item delivery date), visible until/if
+                               xl0g delivers
+
+   Shipping method chain as in the checkout widget: if the API does not know the product's shipping
+   method (empty answer), the fallback applies server-side; the JS refetches once with
+   data-fallback-shipping-method. #}
+{% set xl0gCountry = context.shippingLocation.country.iso ?? null %}
+{% set xl0gMethod = xl0g_product_shipping_method(context, xl0gProductShippingMethod|default(null), 'checkout') %}
+{% set xl0gFallbackMethod = xl0g_shipping_method(context, 'checkout') %}
+{% set xl0gResolved = xl0g_delivery_promise_with_fallback(
+    context.salesChannel.id ?? null,
+    xl0gMethod,
+    xl0gFallbackMethod,
+    'checkout',
+    xl0gCountry
+) %}
+{% set xl0gMethod = xl0gResolved.shippingMethod %}
+{% set xl0gPromise = xl0gResolved.promise %}
+<div class="xl0g-delivery-promise xl0g-delivery-promise--line-item"
+     {% if not xl0gPromise and not xl0gFallback|default %}hidden{% endif %}
+     data-xl0g-delivery-promise
+     data-endpoint="{{ path('frontend.xl0g.delivery_promise') }}"
+     data-shipping-method="{{ xl0gMethod }}"
+     {% if xl0gFallbackMethod != xl0gMethod %}data-fallback-shipping-method="{{ xl0gFallbackMethod }}"{% endif %}
+     data-context="checkout"
+     {% if xl0gCountry %}data-country="{{ xl0gCountry }}"{% endif %}
+     {# Server date for the JS: with promisedDate and a cutoffAt not yet passed, the fetch is skipped
+        entirely (the server render wins — endpoint caches could be older and overwrite the fresh date);
+        without a re-render no (empty) countdown span ever enters the markup here. #}
+     {% if xl0gPromise and xl0gPromise.cutoffAt %}data-cutoff-at="{{ xl0gPromise.cutoffAt }}"{% endif %}
+     {% if xl0gPromise %}data-promised-date="{{ xl0gPromise.promisedDate }}"{% endif %}
+     data-template="{{ 'xl0g.deliveryPromise.lineItem.line'|trans|e('html_attr') }}"
+     aria-live="polite">
+    {%- if xl0gPromise -%}
+        {%- set xl0gDateHtml -%}
+            <b class="xl0g-dp-date">{{ xl0gPromise.promisedDate|format_date(pattern='EEEE, d. MMMM') }}</b>
+        {%- endset -%}
+        <span class="xl0g-status-indicator success"></span>
+        {{ 'xl0g.deliveryPromise.lineItem.line'|trans|e|replace({'{date}': xl0gDateHtml})|raw }}
+    {%- elseif xl0gFallback|default -%}
+        {{ xl0gFallback|raw }}
+    {%- endif -%}
+</div>

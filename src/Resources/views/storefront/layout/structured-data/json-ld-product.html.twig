@@ -1,0 +1,14 @@
+{% sw_extends '@Storefront/storefront/layout/structured-data/json-ld-product.html.twig' %}
+
+{#
+    xl0g shippingDetails in the Shopware core's product JSON-LD (feature flag JSON_LD_DATA, standard from 6.8).
+    The StructuredDataSubscriber puts the date into the page extension xl0gShippingDetails (keys promise
+    and shippingCountry); the Twig function uses the same StructuredDataBuilder as the injection into SEO
+    plugin markup. Without the extension, productData stays unchanged. The core block sets productData
+    before this sub-block, and parent() outputs it.
+#}
+{% block page_product_detail_json_ld_script %}
+    {% set productData = xl0g_inject_shipping_details(productData, page.extensions.xl0gShippingDetails|default(null)) %}
+
+    {{ parent() }}
+{% endblock %}

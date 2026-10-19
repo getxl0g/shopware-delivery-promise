@@ -51,32 +51,38 @@ extensions → Upload extension**, install, activate; then build the storefront 
 
 Admin → **Settings → Extensions → xl0g Delivery Promise**, choose the **sales channel** at the top:
 
+- **Activation:** “xl0g Delivery Promise on product detail page” and, as you wish, “… in checkout” (both off by default)
 - **xl0g API base URL** and **xl0g API key** from step 1
-- **Display & behaviour:** shipping method (`standard`), destination country (`DE`), JSON-LD (on), checkout widget as
-  you wish, “Report page views to xl0g” as you wish (off)
+- **Display & behaviour:** shipping method (`standard`), excluded shipping methods (e.g. freight), destination country
+  (`DE`), JSON-LD (on), “Report page views to xl0g” as you wish (off)
+- optionally additional transit days per delivery country and the countdown thresholds
 
-The **texts** (e.g. “Delivered by {date} — order within the next {countdown}.”) can be adjusted per sales channel under
-**Settings → Snippets**; details in [CONFIGURATION.md](CONFIGURATION.md).
+The **texts** (e.g. “In stock. Delivery by {date}.”) can be adjusted per sales channel under **Settings → Snippets**;
+details in [CONFIGURATION.md](CONFIGURATION.md). For the delivery date per cart line item, Shopware’s setting
+**Settings → Shop → Cart → “Show delivery time”** must be on.
 
 ## 4 · Verify
 
-- **Product page:** below the buy box it reads “Delivered by … — order within the next …”.
-- **JSON-LD:** in the page source a `<script type="application/ld+json">` with `OfferShippingDetails` and
-  `x-xl0g-delivery-date`; cross-check with Google’s Rich Results Test.
-- **Invitation to agents:** load `https://<shop>/llms.txt` and `https://<shop>/.well-known/xl0g-delivery.json`. The
-  `x-xl0g-*` fields are only listed there if JSON-LD is switched on.
+- **Product page** (product in stock): in the delivery information of the buy box it reads “In stock. Delivery by …”;
+  below the countdown threshold also “Order within …”.
+- **JSON-LD:** exactly one Product block in the page source, its offer with `OfferShippingDetails` whose `handlingTime`
+  and `transitTime` (each minValue = maxValue) add up to the date on the page; with the plugin’s own block or an SEO
+  plugin’s markup also `x-xl0g-delivery-date`. Cross-check with Google’s Rich Results Test.
+- **Invitation to agents:** load `https://<shop>/llms.txt` and `https://<shop>/.well-known/xl0g-delivery.json`. They
+  name only what the shop delivers: no fields with JSON-LD off, no `x-xl0g-*` fields with Shopware’s own JSON-LD.
 - **Page views** (if switched on): after a few views, numbers appear in xl0g under “Product Check for AI → Who
   visits?” at “Product pages in the shop”.
 
-If the widget shows nothing, usually the URL or key is wrong, or there is (as yet) no date for the product —
-the plugin then deliberately hides itself.
+If the widget shows nothing, usually the activation switch is off, the URL or key is wrong, the product is not
+deliverable right away, or there is (as yet) no date for it — the plugin then shows Shopware’s own delivery time.
 
 ## 5 · Before wide use
 
 Check once against the real Shopware instance before all channels are switched over:
 
-1. Does the widget appear in the right place? (Twig blocks `buy_widget_delivery_informations` in the buy box,
-   `page_checkout_confirm_tos` — a custom theme can override them.)
+1. Does the widget appear in the right place, once? (Twig blocks `component_delivery_information_available` and
+   `…_default` of `component/delivery-information.html.twig`, `component_line_item_type_product_delivery_date` for line
+   items — a custom theme can override them.)
 2. Does the JSON-LD carry real values (name, price, availability)?
 3. Do `/.well-known/xl0g-delivery.json` and `/llms.txt` respond?
 4. Is Google’s Rich Results Test green?

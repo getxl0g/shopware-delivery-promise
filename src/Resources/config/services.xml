@@ -5,19 +5,53 @@
     <services>
         <defaults autowire="true" autoconfigure="true"/>
 
-        <!-- Service: wraps the config and the HTTP call to the xl0g promise API (X-API-Key, server-side). -->
-        <service id="Xl0g\DeliveryPromise\Service\Xl0gPromiseClient"/>
+        <!-- Service: encapsulates config + the HTTP call to the xl0g promise API (X-API-Key, server-side).
+             cache.object = Shopware's object cache (Redis) for the positive/negative cache of the promise data. -->
+        <service id="Xl0g\DeliveryPromise\Service\Xl0gPromiseClient">
+            <argument key="$cache" type="service" id="cache.object"/>
+            <tag name="monolog.logger" channel="xl0g_delivery_promise"/>
+        </service>
 
-        <!-- Service: builds the Schema.org JSON-LD (pure function, unit-testable). -->
+        <!-- Additional transit time per delivery country (config mapping, sales-channel scoped). -->
+        <service id="Xl0g\DeliveryPromise\Service\CountryTransitProvider">
+            <tag name="monolog.logger" channel="xl0g_delivery_promise"/>
+        </service>
+
+        <!-- Resolves the xl0g shipping method: product custom field (UUID ⇒ xl0g mapping of the
+             referenced shipping method) or, in the checkout, the custom field mapping of the selected
+             shipping method, otherwise the configured default. -->
+        <service id="Xl0g\DeliveryPromise\Service\ShippingMethodResolver">
+            <argument key="$shippingMethodRepository" type="service" id="shipping_method.repository"/>
+            <tag name="monolog.logger" channel="xl0g_delivery_promise"/>
+        </service>
+
+        <!-- Service: builds the Schema.org JSON-LD (pure functions, unit-testable). -->
         <service id="Xl0g\DeliveryPromise\Service\StructuredDataBuilder"/>
 
-        <!-- 0.7.0: classifies visitors (browser/agent/bot/werkzeug = tool) — the user agent never leaves the shop. -->
+        <!-- Collects per request the cutoffs of the rendered dates (Twig widgets + JSON-LD);
+             basis for capping the page's s-maxage. -->
+        <service id="Xl0g\DeliveryPromise\Service\RenderedPromiseCollector"/>
+
+        <!-- Caps the page's s-maxage (product page in the HTTP cache) at the cutoff of the rendered
+             date — only shortening, only if Shopware made the response cacheable.
+             autoconfigure tags EventSubscriberInterface automatically. -->
+        <service id="Xl0g\DeliveryPromise\Storefront\Subscriber\HttpCacheCutoffSubscriber"/>
+
+        <!-- Twig functions for the server-side first render (autoconfigure tags twig.extension). -->
+        <service id="Xl0g\DeliveryPromise\Twig\DeliveryPromiseTwigExtension"/>
+
+        <!-- Twig function xl0g_inject_shipping_details() — merges the shippingDetails into the
+             product JSON-LD of the Shopware core (feature flag JSON_LD_DATA). -->
+        <service id="Xl0g\DeliveryPromise\Twig\StructuredDataTwigExtension"/>
+
+        <!-- Classifies the visitor of a product page in the shop (browser, AI agent, search engine, tool) for the page
+             view report; the user agent never leaves the shop. -->
         <service id="Xl0g\DeliveryPromise\Service\VisitorClassifier"/>
 
-        <!-- Service: builds the agent discovery manifest + llms.txt (pure function, unit-testable). -->
+        <!-- Service: builds the agent discovery manifest + llms.txt (pure functions, unit-testable). -->
         <service id="Xl0g\DeliveryPromise\Service\AgentDiscoveryBuilder"/>
 
-        <!-- B3: subscriber that enriches the PDP with shippingDetails JSON-LD.
+        <!-- Subscriber that enriches the product page with shippingDetails JSON-LD.
              autoconfigure tags EventSubscriberInterface automatically. -->
         <service id="Xl0g\DeliveryPromise\Storefront\Subscriber\StructuredDataSubscriber"/>
 
@@ -28,7 +62,7 @@
             </call>
         </service>
 
-        <!-- B5: Discovery-Controller (llms.txt + /.well-known/xl0g-delivery.json). -->
+        <!-- Discovery controller (llms.txt + /.well-known/xl0g-delivery.json). -->
         <service id="Xl0g\DeliveryPromise\Storefront\Controller\DiscoveryController" public="true">
             <call method="setContainer">
                 <argument type="service" id="service_container"/>

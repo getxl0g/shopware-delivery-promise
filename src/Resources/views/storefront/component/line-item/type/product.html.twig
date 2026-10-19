@@ -1,0 +1,65 @@
+{% sw_extends '@Storefront/storefront/component/line-item/type/product.html.twig' %}
+
+{# Delivery date per line item (offcanvas, cart and confirm page use the same line item template).
+
+   Precondition: Shopware renders the block only with the core setting "Show delivery time in the cart"
+   (core.cart.showDeliveryTime) — the check sits in the core template BEFORE the block.
+
+   Availability switch = the condition of the product page's "available" branch, applied to the line
+   item, and deliberately WITHOUT a Shopware delivery time: the delivery time is meant to come from
+   xl0g. The data source is the DeliveryInformation struct of the cart line item, which the cart
+   processor sets only for physical items — no additional queries.
+
+   - shipping method excluded  ⇒ Shopware standard (config "Excluded shipping methods" matches the
+                                 shipping method from the item's product custom field): the plugin is
+                                 fully transparent for the item, xl0g is not asked.
+   - stock >= ordered quantity ⇒ xl0g widget (quantity instead of minimum purchase: it is known in the
+                                 cart — the same rule by which Shopware's DeliveryBuilder uses the
+                                 delivery date instead of the restock date). Shipping method from the
+                                 product custom field (payload), Shopware's line item delivery date as
+                                 the fallback.
+   - restockTime + deliveryTime ⇒ pre-order display as on the product page (core snippet
+                                 detail.deliveryTimeRestock, including singular/plural)
+   - otherwise                 ⇒ Shopware standard: digital items (downloads — no physical delivery
+                                 date, excluded as on the product page) and order views (order
+                                 finished, customer account: there lineItem is an OrderLineItemEntity
+                                 without DeliveryInformation). #}
+{% block component_line_item_type_product_delivery_date %}
+    {% if config('Xl0gDeliveryPromise.config.deliveryPromiseCheckout') %}
+        {% set xl0gDeliveryInfo = lineItem.deliveryInformation ?? null %}
+        {# Digital items carry no DeliveryInformation anyway; the type check makes the exception
+           explicit and independent of this core detail. #}
+        {% set xl0gIsDigital = lineItem.payload.productType|default(null) == constant('Shopware\\Core\\Content\\Product\\ProductDefinition::TYPE_DIGITAL') %}
+        {% set xl0gProductShippingMethod = lineItem.payload.customFields[constant('Xl0g\\DeliveryPromise\\Service\\ShippingMethodResolver::PRODUCT_CUSTOM_FIELD_NAME')] ?? null %}
+
+        {# Excluded shipping methods (config): an item with an excluded product shipping method ⇒ the
+           plugin is fully transparent for it (no pre-order line either) — Shopware/theme standard,
+           xl0g is not asked. #}
+        {% if xl0g_is_shipping_method_excluded(context, xl0gProductShippingMethod) %}
+            {{ parent() }}
+        {% elseif xl0gDeliveryInfo and not xl0gIsDigital and xl0gDeliveryInfo.stock >= lineItem.quantity %}
+            {# Fallback trimmed: Shopware's line item delivery date can be empty (e.g. offcanvas with the
+               theme's delivery period switched off) — then the widget stays hidden without a date. #}
+            {% set xl0gFallbackHtml %}{{ parent() }}{% endset %}
+            {% set xl0gFallbackHtml = xl0gFallbackHtml|trim %}
+            {% sw_include '@Xl0gDeliveryPromise/storefront/component/xl0g/delivery-promise-widget-line-item.html.twig' with {
+                xl0gProductShippingMethod: xl0gProductShippingMethod,
+                xl0gFallback: xl0gFallbackHtml
+            } %}
+        {% elseif xl0gDeliveryInfo and xl0gDeliveryInfo.restockTime and xl0gDeliveryInfo.deliveryTime %}
+            {# Same indicator as in the product page's restock branch (bg-warning) ⇒ theme styling applies. #}
+            <div class="line-item-delivery-date delivery-information delivery-restock">
+                <span class="delivery-status-indicator bg-warning"></span>
+                {{ 'detail.deliveryTimeRestock'|trans({
+                    '%count%': xl0gDeliveryInfo.restockTime,
+                    '%restockTime%': xl0gDeliveryInfo.restockTime,
+                    '%name%': xl0gDeliveryInfo.deliveryTime.name
+                })|sw_sanitize }}
+            </div>
+        {% else %}
+            {{ parent() }}
+        {% endif %}
+    {% else %}
+        {{ parent() }}
+    {% endif %}
+{% endblock %}
