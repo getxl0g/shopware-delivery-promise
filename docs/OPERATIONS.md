@@ -35,8 +35,9 @@ At the top of the config dialog **choose the channel**, then per channel:
 
 ## 3 · Monitoring (good practice)
 - **Visual check**: is the widget there on a real PDP? Is the JSON-LD valid (Rich Results Test)?
-- **xl0g API health**: the plugin depends on the xl0g promise API. Slow (>3 s) or down → the widget hides
-  **silently** (timeout 3 s, error swallowed). That is why **the xl0g side should be monitored too**.
+- **xl0g API health**: the plugin depends on the xl0g promise API. Slow (more than 2 s) or down → the shop shows
+  Shopware's own delivery time instead, **silently** (connect timeout 1.5 s, total 2 s, error swallowed; a failure is
+  cached for 90 s). That is why **the xl0g side should be monitored too**.
 - **Google Search Console**: watch `shippingDetails`/shipping rich results + structure errors.
 - **Shopware log**: since the plugin deliberately swallows errors (fail-safe), to debug check the response of
   `GET /xl0g/delivery-promise` — **200 + JSON** = date delivered, **204** = no date/config.

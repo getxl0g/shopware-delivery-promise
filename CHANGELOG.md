@@ -2,6 +2,12 @@
 
 All notable changes to this plugin. Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+
+- **Docs:** `docs/OPERATIONS.md` stated a 3 s timeout after which the widget hides. Actual behaviour, as in the code,
+  README and ARCHITECTURE: connect timeout 1.5 s, total 2 s, a failure is cached for 90 s, and the shop shows
+  Shopware's own delivery time instead.
+
 ## [0.7.2] — 2026-10-19 — Server-rendered widget, cutoff-aware caches, one JSON-LD block per page, shipping methods
 
 - **Server-rendered widget, no layout shift.** The date is rendered with the page from the object cache; the JS only
