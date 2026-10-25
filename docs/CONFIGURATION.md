@@ -41,6 +41,12 @@ If either field is missing, the plugin shows **nothing** — no broken widget, n
 exactly the date the page shows. A handling time from the Shopware delivery time (e.g. 1–3 days) is replaced; without a
 ship date from xl0g it stays.
 
+`llms.txt` and the manifest additionally name the public xl0g product feed (“Product feed with delivery dates (JSON,
+xl0g schema)”, manifest key `product_feed`) at `{xl0g API base URL}/ucp-feed`, e.g.
+`https://xl0g.com/<tenant>/api/ucp-feed`. It is derived from the **xl0g API base URL**; without one nothing is listed.
+The plugin cannot see whether the feed is switched on for your tenant on the xl0g side — ask xl0g to enable it, or
+the listed address will not answer.
+
 > **Checking a shop:** `curl -s https://<shop>/.well-known/xl0g-delivery.json` shows under
 > `delivery_intelligence.signals` what the shop announces; cross-check on a product page:
 > `curl -s <product page URL> | grep -o '"handlingTime":{[^}]*}'`.

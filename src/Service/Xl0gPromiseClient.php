@@ -188,6 +188,12 @@ class Xl0gPromiseClient
         return $v !== '' ? $v : 'DE';
     }
 
+    /** Configured xl0g API base URL without a trailing slash; empty string if not configured. */
+    public function apiBaseUrl(?string $salesChannelId = null): string
+    {
+        return $this->baseUrl($salesChannelId);
+    }
+
     public function isJsonLdEnabled(?string $salesChannelId = null): bool
     {
         $v = $this->systemConfig->get('Xl0gDeliveryPromise.config.enableJsonLd', $salesChannelId);

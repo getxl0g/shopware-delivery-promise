@@ -4,6 +4,12 @@ All notable changes to this plugin. Format: [Keep a Changelog](https://keepachan
 
 ## [Unreleased]
 
+- **Discovery points to the product feed.** `llms.txt` and `/.well-known/xl0g-delivery.json` now name the public xl0g
+  product feed (“Product feed with delivery dates (JSON, xl0g schema)”) whenever the xl0g API base URL is configured:
+  the address is `{xl0g API base URL}/ucp-feed`, derived from the existing setting — no new field. With an empty or
+  non-http(s) base URL nothing is listed. The manifest gets a `product_feed` object (`url`, `format`, `description`).
+  The feed itself is switched on per tenant on the xl0g side; the plugin cannot see that switch and lists the address
+  regardless of the JSON-LD setting.
 - **Docs:** `docs/OPERATIONS.md` stated a 3 s timeout after which the widget hides. Actual behaviour, as in the code,
   README and ARCHITECTURE: connect timeout 1.5 s, total 2 s, a failure is cached for 90 s, and the shop shows
   Shopware's own delivery time instead.

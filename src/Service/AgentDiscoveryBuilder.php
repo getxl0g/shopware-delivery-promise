@@ -16,7 +16,12 @@ namespace Xl0g\DeliveryPromise\Service;
  * There the plugin writes no `x-xl0g-*` fields (they are not Schema.org vocabulary); the date is expressed as
  * handlingTime + transitTime with minValue = maxValue. The texts then name that instead of the extra fields.
  *
- * Pure functions (only `$shopUrl`, `$jsonLdEnabled` and `$coreJsonLd` in) → unit-testable.
+ * `$feedUrl` is the address of the public product feed (optional, default null = not listed). It is only ever
+ * listed when it is known: {@see self::feedUrlFromApiBase()} derives it from the configured xl0g API base URL and
+ * returns null if that is empty or not a plain http(s) address. The feed is described neutrally — no protocol
+ * conformance is claimed.
+ *
+ * Pure functions (only `$shopUrl`, `$jsonLdEnabled`, `$coreJsonLd` and `$feedUrl` in) → unit-testable.
  */
 class AgentDiscoveryBuilder
 {
@@ -36,14 +41,32 @@ class AgentDiscoveryBuilder
     private const WHERE_DISABLED = 'Not exposed as structured data in this shop: JSON-LD output is switched '
         . 'off. Delivery dates are shown to visitors on the product page only.';
 
+    private const FEED_DESCRIPTION = 'Product feed with delivery dates (JSON, xl0g schema)';
+
     /**
-     * @param bool $jsonLdEnabled state of `Xl0gDeliveryPromise.config.enableJsonLd` for the sales channel
+     * The public product feed lives at `{apiBaseUrl}/ucp-feed` of the xl0g tenant (no authentication).
+     * Returns null — so nothing is listed — if the base URL is empty, not http(s), or carries a query/fragment/whitespace.
+     */
+    public static function feedUrlFromApiBase(string $apiBaseUrl): ?string
+    {
+        $base = rtrim(trim($apiBaseUrl), '/');
+
+        if (1 !== preg_match('#^https?://[^\s?\#]+$#i', $base)) {
+            return null;
+        }
+
+        return $base . '/ucp-feed';
+    }
+
+    /**
+     * @param bool        $jsonLdEnabled state of `Xl0gDeliveryPromise.config.enableJsonLd` for the sales channel
+     * @param string|null $feedUrl       public product feed address; null = not known, not listed
      *
      * @return array<string, mixed>
      */
-    public function manifest(string $shopUrl, bool $jsonLdEnabled, bool $coreJsonLd): array
+    public function manifest(string $shopUrl, bool $jsonLdEnabled, bool $coreJsonLd, ?string $feedUrl = null): array
     {
-        return [
+        $manifest = [
             'protocol' => 'xl0g-agent-discovery',
             'version' => '0',
             'shop' => ['url' => $shopUrl],
@@ -70,12 +93,23 @@ class AgentDiscoveryBuilder
                 'transaction' => 'Handled by the shop (Shopware) + emerging agentic protocols (OpenAI/Stripe ACP, Google AP2).',
             ],
         ];
+
+        if (null !== $feedUrl && '' !== $feedUrl) {
+            $manifest['product_feed'] = [
+                'url' => $feedUrl,
+                'format' => 'application/json',
+                'description' => self::FEED_DESCRIPTION,
+            ];
+        }
+
+        return $manifest;
     }
 
     /**
-     * @param bool $jsonLdEnabled state of `Xl0gDeliveryPromise.config.enableJsonLd` for the sales channel
+     * @param bool        $jsonLdEnabled state of `Xl0gDeliveryPromise.config.enableJsonLd` for the sales channel
+     * @param string|null $feedUrl       public product feed address; null = not known, not listed
      */
-    public function llmsTxt(string $shopUrl, bool $jsonLdEnabled, bool $coreJsonLd): string
+    public function llmsTxt(string $shopUrl, bool $jsonLdEnabled, bool $coreJsonLd, ?string $feedUrl = null): string
     {
         $lines = [
             '# Delivery intelligence (powered by xl0g)',
@@ -108,6 +142,10 @@ class AgentDiscoveryBuilder
 
         if ($jsonLdEnabled) {
             $lines[] = '- Delivery data is public on each product page as JSON-LD (no API key needed to read it).';
+        }
+
+        if (null !== $feedUrl && '' !== $feedUrl) {
+            $lines[] = '- ' . self::FEED_DESCRIPTION . ': ' . $feedUrl;
         }
 
         $lines[] = '- Agent discovery manifest: ' . $shopUrl . '/.well-known/xl0g-delivery.json';

@@ -35,7 +35,7 @@ class DiscoveryController extends StorefrontController
     public function llmsTxt(Request $request): Response
     {
         return new Response(
-            $this->builder->llmsTxt($request->getSchemeAndHttpHost(), $this->jsonLdEnabled($request), StructuredDataSubscriber::isCoreJsonLdActive()),
+            $this->builder->llmsTxt($request->getSchemeAndHttpHost(), $this->jsonLdEnabled($request), StructuredDataSubscriber::isCoreJsonLdActive(), $this->feedUrl($request)),
             Response::HTTP_OK,
             ['Content-Type' => 'text/plain; charset=utf-8']
         );
@@ -45,8 +45,16 @@ class DiscoveryController extends StorefrontController
     public function wellKnown(Request $request): JsonResponse
     {
         return new JsonResponse(
-            $this->builder->manifest($request->getSchemeAndHttpHost(), $this->jsonLdEnabled($request), StructuredDataSubscriber::isCoreJsonLdActive())
+            $this->builder->manifest($request->getSchemeAndHttpHost(), $this->jsonLdEnabled($request), StructuredDataSubscriber::isCoreJsonLdActive(), $this->feedUrl($request))
         );
+    }
+
+    /**
+     * Address of the public product feed, derived from the configured xl0g API base URL; null if there is none.
+     */
+    private function feedUrl(Request $request): ?string
+    {
+        return AgentDiscoveryBuilder::feedUrlFromApiBase($this->client->apiBaseUrl($request->attributes->get('sw-sales-channel-id')));
     }
 
     /**

@@ -97,4 +97,63 @@ class AgentDiscoveryBuilderTest extends TestCase
         self::assertSame([], $b->manifest('https://shop.example', false, true)['delivery_intelligence']['signals']);
         self::assertStringContainsString('does not expose', $b->llmsTxt('https://shop.example', false, true));
     }
+
+    public function testFeedIsListedInLlmsTxtAndManifestWhenKnown(): void
+    {
+        $b = new AgentDiscoveryBuilder();
+        $feed = 'https://xl0g.com/<tenant>/api/ucp-feed';
+
+        $txt = $b->llmsTxt('https://shop.example', true, false, $feed);
+        $m = $b->manifest('https://shop.example', true, false, $feed);
+
+        self::assertStringContainsString('Product feed with delivery dates (JSON, xl0g schema): ' . $feed, $txt);
+        self::assertSame($feed, $m['product_feed']['url']);
+        self::assertSame('application/json', $m['product_feed']['format']);
+        // Neutral wording: no protocol conformance is claimed.
+        self::assertStringNotContainsStringIgnoringCase('UCP', json_encode($m['product_feed']));
+        self::assertStringNotContainsStringIgnoringCase('ACP-compliant', $txt);
+        // Listed independently of the JSON-LD switch.
+        self::assertStringContainsString($feed, $b->llmsTxt('https://shop.example', false, false, $feed));
+        self::assertSame($feed, $b->manifest('https://shop.example', false, false, $feed)['product_feed']['url']);
+    }
+
+    public function testFeedIsNotListedWhenUnknown(): void
+    {
+        $b = new AgentDiscoveryBuilder();
+
+        foreach ([null, ''] as $feed) {
+            $txt = $b->llmsTxt('https://shop.example', true, false, $feed);
+            $m = $b->manifest('https://shop.example', true, false, $feed);
+
+            self::assertStringNotContainsString('Product feed', $txt);
+            self::assertStringNotContainsString('ucp-feed', $txt);
+            self::assertArrayNotHasKey('product_feed', $m);
+        }
+        // Default (parameter omitted) behaves like null.
+        self::assertArrayNotHasKey('product_feed', $b->manifest('https://shop.example', true, false));
+    }
+
+    /**
+     * @dataProvider feedUrlProvider
+     */
+    public function testFeedUrlIsDerivedFromApiBaseUrlOnlyWhenPlausible(string $apiBase, ?string $expected): void
+    {
+        self::assertSame($expected, AgentDiscoveryBuilder::feedUrlFromApiBase($apiBase));
+    }
+
+    /**
+     * @return iterable<string, array{string, ?string}>
+     */
+    public static function feedUrlProvider(): iterable
+    {
+        yield 'plain' => ['https://xl0g.com/<tenant>/api', 'https://xl0g.com/<tenant>/api/ucp-feed'];
+        yield 'trailing slash' => ['https://xl0g.com/<tenant>/api/', 'https://xl0g.com/<tenant>/api/ucp-feed'];
+        yield 'surrounding whitespace' => [" https://xl0g.com/<tenant>/api \n", 'https://xl0g.com/<tenant>/api/ucp-feed'];
+        yield 'empty' => ['', null];
+        yield 'blank' => ['   ', null];
+        yield 'no scheme' => ['xl0g.com/<tenant>/api', null];
+        yield 'other scheme' => ['ftp://xl0g.com/<tenant>/api', null];
+        yield 'query string' => ['https://xl0g.com/<tenant>/api?x=1', null];
+        yield 'inner whitespace' => ['https://xl0g.com/<tenant> /api', null];
+    }
 }
