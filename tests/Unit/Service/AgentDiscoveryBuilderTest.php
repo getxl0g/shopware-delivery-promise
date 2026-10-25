@@ -110,7 +110,7 @@ class AgentDiscoveryBuilderTest extends TestCase
         self::assertSame($feed, $m['product_feed']['url']);
         self::assertSame('application/json', $m['product_feed']['format']);
         // Neutral wording: no protocol conformance is claimed.
-        self::assertStringNotContainsStringIgnoringCase('UCP', json_encode($m['product_feed']));
+        self::assertStringNotContainsStringIgnoringCase('UCP', $m['product_feed']['description']);
         self::assertStringNotContainsStringIgnoringCase('ACP-compliant', $txt);
         // Listed independently of the JSON-LD switch.
         self::assertStringContainsString($feed, $b->llmsTxt('https://shop.example', false, false, $feed));

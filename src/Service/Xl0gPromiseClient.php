@@ -188,10 +188,18 @@ class Xl0gPromiseClient
         return $v !== '' ? $v : 'DE';
     }
 
-    /** Configured xl0g API base URL without a trailing slash; empty string if not configured. */
-    public function apiBaseUrl(?string $salesChannelId = null): string
+    /**
+     * Address of the public xl0g product feed for llms.txt + the manifest, or null if it must not be listed:
+     * only on explicit opt-in (`listPublicFeed`, default off — the feed is activated per tenant on the xl0g side and the
+     * address answers 404 otherwise) and only with a usable API base URL.
+     */
+    public function publicFeedUrl(?string $salesChannelId = null): ?string
     {
-        return $this->baseUrl($salesChannelId);
+        if (!(bool) $this->systemConfig->get('Xl0gDeliveryPromise.config.listPublicFeed', $salesChannelId)) {
+            return null;
+        }
+
+        return AgentDiscoveryBuilder::feedUrlFromApiBase($this->baseUrl($salesChannelId));
     }
 
     public function isJsonLdEnabled(?string $salesChannelId = null): bool

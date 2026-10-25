@@ -27,6 +27,7 @@ If either field is missing, the plugin shows **nothing** — no broken widget, n
 | **Excluded shipping methods** | empty | Multi-select of Shopware shipping methods. Products whose product custom field “shipping method” (`shippingMethod`) points to one of them get **no** xl0g delivery promise (details below). |
 | **Destination country (ISO, for JSON-LD)** | `DE` | Country code for the `shippingDestination` in the JSON-LD. |
 | **Emit JSON-LD on the product page** | on | Schema.org `shippingDetails` for Google rich results and AI agents. Merged into existing product markup: an SEO plugin’s markup (DreiSC SEO Pro) or — with Shopware’s flag `JSON_LD_DATA` (6.7.9+, standard from 6.8) — the core JSON-LD; the plugin emits its own Product block only without either. Also controls what `llms.txt` and `/.well-known/xl0g-delivery.json` announce (see below). |
+| **List public product feed in llms.txt and manifest** | off | Names the public xl0g product feed in `llms.txt` and the manifest (details below). Only switch on if xl0g has activated the public feed for your shop; otherwise the address returns 404. |
 | **Report page views to xl0g** | off | Reports, per product page view, the product number, shop and kind of visitor (person, AI agent, search engine, tool) to xl0g; visible under “Product Check for AI → Who visits?”. No user agent, no address — see below. |
 
 ### What the JSON-LD says, and what the invitation to agents announces
@@ -43,9 +44,10 @@ ship date from xl0g it stays.
 
 `llms.txt` and the manifest additionally name the public xl0g product feed (“Product feed with delivery dates (JSON,
 xl0g schema)”, manifest key `product_feed`) at `{xl0g API base URL}/ucp-feed`, e.g.
-`https://xl0g.com/<tenant>/api/ucp-feed`. It is derived from the **xl0g API base URL**; without one nothing is listed.
-The plugin cannot see whether the feed is switched on for your tenant on the xl0g side — ask xl0g to enable it, or
-the listed address will not answer.
+`https://xl0g.com/<tenant>/api/ucp-feed`. It is listed **only if** the switch “List public product feed in llms.txt and manifest” is on (default off) **and**
+the **xl0g API base URL** is a plain http(s) address; otherwise nothing is listed. The plugin cannot see whether the
+feed is activated for your tenant on the xl0g side — switch it on only after xl0g confirmed that, or the listed address
+will answer 404.
 
 > **Checking a shop:** `curl -s https://<shop>/.well-known/xl0g-delivery.json` shows under
 > `delivery_intelligence.signals` what the shop announces; cross-check on a product page:

@@ -85,6 +85,15 @@
         </input-field>
 
         <input-field type="bool">
+            <name>listPublicFeed</name>
+            <label lang="de-DE">Öffentlichen Produkt-Feed in llms.txt und Manifest nennen</label>
+            <label lang="en-GB">List public product feed in llms.txt and manifest</label>
+            <defaultValue>false</defaultValue>
+            <helpText lang="de-DE">Nur einschalten, wenn xl0g den öffentlichen Feed für Ihren Shop freigeschaltet hat; sonst antwortet die Adresse mit 404. Genannt wird {xl0g API-Basis-URL}/ucp-feed.</helpText>
+            <helpText lang="en-GB">Only switch on if xl0g has activated the public feed for your shop; otherwise the address returns 404. The address listed is {xl0g API base URL}/ucp-feed.</helpText>
+        </input-field>
+
+        <input-field type="bool">
             <name>reportPageViews</name>
             <label lang="de-DE">Seitenaufrufe an xl0g melden</label>
             <label lang="en-GB">Report page views to xl0g</label>

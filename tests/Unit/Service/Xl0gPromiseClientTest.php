@@ -397,6 +397,27 @@ class Xl0gPromiseClientTest extends TestCase
         };
     }
 
+    public function testPublicFeedIsNotListedWithoutOptIn(): void
+    {
+        $client = $this->client(new MockHttpClient(), true, null, '', null, null, false, false);
+
+        self::assertNull($client->publicFeedUrl());
+    }
+
+    public function testPublicFeedIsListedOnOptInWithValidBaseUrl(): void
+    {
+        $client = $this->client(new MockHttpClient(), true, null, '', null, null, false, true);
+
+        self::assertSame('https://xl0g.test/tenant/api/ucp-feed', $client->publicFeedUrl());
+    }
+
+    public function testPublicFeedIsNotListedOnOptInWithInvalidOrMissingBaseUrl(): void
+    {
+        self::assertNull($this->client(new MockHttpClient(), true, null, '', null, null, false, true, 'not a url')->publicFeedUrl());
+        self::assertNull($this->client(new MockHttpClient(), true, null, '', null, null, false, true, 'https://xl0g.test/t/api?x=1')->publicFeedUrl());
+        self::assertNull($this->client(new MockHttpClient(), false, null, '', null, null, false, true)->publicFeedUrl());
+    }
+
     /**
      * @param array<string, mixed> $body
      */
@@ -415,17 +436,20 @@ class Xl0gPromiseClientTest extends TestCase
         string $transitDays = '',
         ?bool $skipWeekends = null,
         mixed $excludedShippingMethods = null,
-        bool $reportPageViews = false
+        bool $reportPageViews = false,
+        bool $listPublicFeed = false,
+        ?string $apiBaseUrl = null
     ): Xl0gPromiseClient {
         $systemConfig = $this->createMock(SystemConfigService::class);
         $systemConfig->method('get')->willReturnMap([
-            ['Xl0gDeliveryPromise.config.apiBaseUrl', null, $configured ? 'https://xl0g.test/tenant/api' : ''],
+            ['Xl0gDeliveryPromise.config.apiBaseUrl', null, $configured ? ($apiBaseUrl ?? 'https://xl0g.test/tenant/api') : ''],
             ['Xl0gDeliveryPromise.config.apiKey', null, $configured ? 'secret' : ''],
             ['Xl0gDeliveryPromise.config.defaultShippingMethod', null, 'standard'],
             ['Xl0gDeliveryPromise.config.internationalTransitDays', null, $transitDays],
             ['Xl0gDeliveryPromise.config.internationalSkipWeekends', null, $skipWeekends],
             ['Xl0gDeliveryPromise.config.excludedShippingMethods', null, $excludedShippingMethods],
             ['Xl0gDeliveryPromise.config.reportPageViews', null, $reportPageViews],
+            ['Xl0gDeliveryPromise.config.listPublicFeed', null, $listPublicFeed],
         ]);
 
         return new Xl0gPromiseClient(

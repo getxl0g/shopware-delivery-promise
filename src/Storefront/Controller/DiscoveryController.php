@@ -50,11 +50,11 @@ class DiscoveryController extends StorefrontController
     }
 
     /**
-     * Address of the public product feed, derived from the configured xl0g API base URL; null if there is none.
+     * Address of the public product feed; null (not listed) unless the shop opted in and has a usable API base URL.
      */
     private function feedUrl(Request $request): ?string
     {
-        return AgentDiscoveryBuilder::feedUrlFromApiBase($this->client->apiBaseUrl($request->attributes->get('sw-sales-channel-id')));
+        return $this->client->publicFeedUrl($request->attributes->get('sw-sales-channel-id'));
     }
 
     /**
