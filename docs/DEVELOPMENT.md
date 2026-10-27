@@ -69,8 +69,8 @@ Details in [ARCHITECTURE.md](ARCHITECTURE.md). In short:
 
 ## Tested against real Shopware
 
-`scripts/compatibility.sh` checks, against the latest release of each supported line (0.7.2 on 2026-10-19: 6.7.15.1
-and 6.6.10.29, both with a test access): installation, theme build,
+`scripts/compatibility.sh` checks, against the latest release of each supported line (0.7.3 on 2026-10-27: 6.7.15.1
+and 6.6.10.30): installation, theme build,
 product page with the widget (switched on for the test), the page view beacon route, `/llms.txt`,
 `/.well-known/xl0g-delivery.json` and the unit tests. The widget hooks into `component/delivery-information.html.twig`,
 which the buy widget includes in 6.6 and 6.7.

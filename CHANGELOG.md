@@ -2,7 +2,7 @@
 
 All notable changes to this plugin. Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
+## [0.7.3] — 2026-10-27 — Optional product feed in the agent discovery
 
 - **Discovery can point to the product feed (opt-in).** New switch “List public product feed in llms.txt and
   manifest” (`listPublicFeed`, off by default). When on, `llms.txt` and `/.well-known/xl0g-delivery.json` name the
