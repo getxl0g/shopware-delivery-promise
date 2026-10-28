@@ -34,9 +34,9 @@ If either field is missing, the plugin shows **nothing** — no broken widget, n
 
 | Situation | Product page | `llms.txt` + manifest |
 |---|---|---|
-| JSON-LD **on**, own block or SEO plugin markup | `OfferShippingDetails` with `handlingTime` and `transitTime` from xl0g, plus `x-xl0g-delivery-date` and, while an order cutoff applies, `x-xl0g-cutoff-at` | name `handlingTime`/`transitTime`; list `x-xl0g-delivery-date` and `x-xl0g-cutoff-at` only as **optional** (markup of another plugin can leave them out) and add that products without a date deliberately carry none |
+| JSON-LD **on**, own block or SEO plugin markup | `OfferShippingDetails` with `handlingTime` and `transitTime` from xl0g, plus `x-xl0g-delivery-date` and, while an order cutoff applies, `x-xl0g-cutoff-at` | name `handlingTime`/`transitTime`; list `x-xl0g-delivery-date` and `x-xl0g-cutoff-at` only as **optional** (markup of another plugin or a theme can leave them out) and add that products without a date deliberately carry none |
 | JSON-LD **on**, Shopware’s own JSON-LD (`JSON_LD_DATA`) | `OfferShippingDetails` with `handlingTime` and `transitTime` from xl0g, **no** `x-xl0g-*` fields (not Schema.org vocabulary, the core block stays validator-clean) | name handlingTime + transitTime (minValue = maxValue), no `x-xl0g-*` fields |
-| JSON-LD **off** | no JSON-LD from the plugin | name **no** fields, but say that this shop does not provide the dates as structured data |
+| JSON-LD **off**, or the xl0g connection (API base URL, key) **not configured** for the sales channel | no JSON-LD from the plugin | name **no** fields, but say that this shop does not provide the dates as structured data; the visible delivery text is mentioned only if the product page widget is on and the connection is configured |
 
 With “xl0g Delivery Promise on product detail page” on, `llms.txt` and the manifest (`page_element`) also name the
 server-rendered element `[data-xl0g-delivery-promise]` as the reliable source: `data-promised-date` is the delivery

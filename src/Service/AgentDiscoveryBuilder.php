@@ -6,11 +6,11 @@ namespace Xl0g\DeliveryPromise\Service;
  * Builds the agent discovery manifest (JSON) + the `llms.txt` — the **discovery half** of
  * agentic commerce. Shows AI shopping agents where the (public) delivery signals are.
  *
- * Both methods need `$jsonLdEnabled` — the actual state of the switch
- * `Xl0gDeliveryPromise.config.enableJsonLd` for the serving sales channel. The parameter is
- * deliberately **without a default**: the manifest may only announce what the shop also delivers. If
- * the switch is off, {@see StructuredDataSubscriber} adds no JSON-LD — then no field may be
- * promised here either, otherwise the manifest sends agents on a search that comes up empty.
+ * Both methods need `$jsonLdEnabled` — whether the plugin writes JSON-LD for the serving sales channel at all
+ * (`Xl0gPromiseClient::emitsJsonLd()`: the switch `Xl0gDeliveryPromise.config.enableJsonLd` is on AND the xl0g
+ * connection is configured). The parameter is deliberately **without a default**: the manifest may only announce what
+ * the shop also delivers. If the plugin writes no JSON-LD ({@see StructuredDataSubscriber} adds nothing), no field may
+ * be promised here either, otherwise the manifest sends agents on a search that comes up empty.
  *
  * `$coreJsonLd` says whether the plugin merges its data into Shopware's own product JSON-LD (flag `JSON_LD_DATA`).
  * There the plugin writes no `x-xl0g-*` fields (they are not Schema.org vocabulary); the date is expressed as
@@ -37,8 +37,8 @@ class AgentDiscoveryBuilder
      */
     private const WHERE_ENABLED = 'May be embedded as JSON-LD (application/ld+json) on product detail pages that '
         . 'carry a delivery date: OfferShippingDetails, plus the optional fields x-xl0g-delivery-date and '
-        . 'x-xl0g-cutoff-at. The x-xl0g-* fields are not guaranteed on every page (markup of another plugin can '
-        . 'leave them out), so treat them as optional. Products without a delivery date (out of stock, on backorder) '
+        . 'x-xl0g-cutoff-at. The x-xl0g-* fields are not guaranteed on every page (markup of another plugin or a '
+        . 'theme can leave them out), so treat them as optional. Products without a delivery date (out of stock, on backorder) '
         . 'deliberately carry none, and x-xl0g-cutoff-at appears only while an order cutoff applies.';
 
     private const WHERE_CORE = 'Embedded in the product JSON-LD (application/ld+json) of product detail pages as '
@@ -46,8 +46,11 @@ class AgentDiscoveryBuilder
         . 'delivery date is the day of the page view plus both values. Products without a delivery date (out of stock, '
         . 'on backorder) carry no values from xl0g. There are no x-xl0g-* fields in this shop.';
 
-    private const WHERE_DISABLED = 'Not exposed as structured data in this shop: JSON-LD output is switched '
-        . 'off. Delivery dates are shown to visitors on the product page only.';
+    private const WHERE_DISABLED = 'Not exposed as structured data in this shop: the plugin writes no JSON-LD for '
+        . 'this sales channel (output switched off or the xl0g connection not configured). There are no x-xl0g-* '
+        . 'fields.';
+
+    private const DISABLED_VISIBLE = ' Delivery dates are shown to visitors on the product page only.';
 
     private const ELEMENT_NOTE = 'The visible delivery promise on the product page is an HTML element with the attribute '
         . 'data-xl0g-delivery-promise: data-promised-date is the delivery date (YYYY-MM-DD), data-cutoff-at the order '
@@ -71,9 +74,10 @@ class AgentDiscoveryBuilder
     }
 
     /**
-     * @param bool        $jsonLdEnabled state of `Xl0gDeliveryPromise.config.enableJsonLd` for the sales channel
+     * @param bool        $jsonLdEnabled whether the plugin writes JSON-LD for the sales channel (switch on AND configured)
      * @param string|null $feedUrl       public product feed address; null = not known, not listed
-     * @param bool        $widgetOnPage  state of `deliveryPromiseProductPage` for the sales channel
+     * @param bool        $widgetOnPage  the visible delivery promise is on for the product page of the sales channel
+     *                                   (`deliveryPromiseProductPage` on AND connection configured)
      *
      * @return array<string, mixed>
      */
@@ -90,7 +94,7 @@ class AgentDiscoveryBuilder
                     default => ['https://schema.org/OfferShippingDetails'],
                 },
                 'where' => match (true) {
-                    !$jsonLdEnabled => self::WHERE_DISABLED,
+                    !$jsonLdEnabled => self::WHERE_DISABLED . ($widgetOnPage ? self::DISABLED_VISIBLE : ''),
                     $coreJsonLd => self::WHERE_CORE,
                     default => self::WHERE_ENABLED,
                 },
@@ -128,9 +132,10 @@ class AgentDiscoveryBuilder
     }
 
     /**
-     * @param bool        $jsonLdEnabled state of `Xl0gDeliveryPromise.config.enableJsonLd` for the sales channel
+     * @param bool        $jsonLdEnabled whether the plugin writes JSON-LD for the sales channel (switch on AND configured)
      * @param string|null $feedUrl       public product feed address; null = not known, not listed
-     * @param bool        $widgetOnPage  state of `deliveryPromiseProductPage` for the sales channel
+     * @param bool        $widgetOnPage  the visible delivery promise is on for the product page of the sales channel
+     *                                   (`deliveryPromiseProductPage` on AND connection configured)
      */
     public function llmsTxt(string $shopUrl, bool $jsonLdEnabled, bool $coreJsonLd, ?string $feedUrl = null, bool $widgetOnPage = false): string
     {
@@ -152,12 +157,15 @@ class AgentDiscoveryBuilder
             $lines[] = 'Product detail pages may embed Schema.org Product/Offer/OfferShippingDetails as JSON-LD';
             $lines[] = '(application/ld+json) with handlingTime and transitTime and, as optional extras, a precise';
             $lines[] = 'delivery date (x-xl0g-delivery-date) and the order cutoff (x-xl0g-cutoff-at). The x-xl0g-* fields are';
-            $lines[] = 'NOT guaranteed on every page: markup of another plugin can leave them out. Do not rely on them.';
+            $lines[] = 'NOT guaranteed on every page: markup of another plugin or a theme can leave them out. Do not rely on them.';
             $lines[] = 'Products without a delivery date (out of stock, on backorder) deliberately carry none —';
             $lines[] = 'their absence is an answer, not a gap. x-xl0g-cutoff-at is present only while a cutoff applies.';
         } else {
-            $lines[] = 'This shop shows delivery dates to visitors on the product page, but does not expose them';
-            $lines[] = 'as structured data: JSON-LD output is switched off. There are no x-xl0g-* fields to read.';
+            $lines[] = $widgetOnPage
+                ? 'This shop shows delivery dates to visitors on the product page, but does not expose them'
+                : 'This shop does not expose delivery dates';
+            $lines[] = 'as structured data: the plugin writes no JSON-LD for this sales channel (output switched off or the';
+            $lines[] = 'xl0g connection not configured). There are no x-xl0g-* fields to read.';
         }
 
         if ($widgetOnPage) {

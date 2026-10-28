@@ -217,6 +217,17 @@ class Xl0gPromiseClient
         return $v === null ? true : (bool) $v; // default on
     }
 
+    /**
+     * Whether the plugin writes JSON-LD for this sales channel at all: the switch `enableJsonLd` is on AND the connection
+     * (API base URL + key) is configured. Without a connection {@see fetch()} returns null and the structured data
+     * subscriber adds nothing, however the switch stands — so this is the condition the discovery texts must follow,
+     * not the switch alone. The per-product conditions (excluded shipping method, no date) are not part of it.
+     */
+    public function emitsJsonLd(?string $salesChannelId = null): bool
+    {
+        return $this->isJsonLdEnabled($salesChannelId) && $this->isConfigured($salesChannelId);
+    }
+
     public function isReportPageViewsEnabled(?string $salesChannelId = null): bool
     {
         return (bool) $this->systemConfig->get('Xl0gDeliveryPromise.config.reportPageViews', $salesChannelId);

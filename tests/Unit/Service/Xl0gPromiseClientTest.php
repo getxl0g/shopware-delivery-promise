@@ -419,6 +419,38 @@ class Xl0gPromiseClientTest extends TestCase
     }
 
     /**
+     * The discovery texts follow what the structured data subscriber does: JSON-LD is written only with the switch on
+     * AND a configured connection, decided per sales channel (here: channel A on, channel B off, channel C unconfigured).
+     */
+    public function testEmitsJsonLdNeedsSwitchAndConnectionPerSalesChannel(): void
+    {
+        $values = [
+            'A' => ['enableJsonLd' => true, 'apiBaseUrl' => 'https://xl0g.test/t/api', 'apiKey' => 'secret'],
+            'B' => ['enableJsonLd' => false, 'apiBaseUrl' => 'https://xl0g.test/t/api', 'apiKey' => 'secret'],
+            'C' => ['enableJsonLd' => true, 'apiBaseUrl' => '', 'apiKey' => ''],
+            'D' => ['enableJsonLd' => null, 'apiBaseUrl' => 'https://xl0g.test/t/api', 'apiKey' => 'secret'],
+        ];
+        $systemConfig = $this->createMock(SystemConfigService::class);
+        $systemConfig->method('get')->willReturnCallback(
+            static function (string $key, ?string $salesChannelId = null) use ($values): mixed {
+                return $values[$salesChannelId][str_replace('Xl0gDeliveryPromise.config.', '', $key)] ?? null;
+            }
+        );
+        $client = new Xl0gPromiseClient(
+            $systemConfig,
+            new MockHttpClient(),
+            new ArrayAdapter(),
+            new NullLogger(),
+            new CountryTransitProvider($systemConfig, new NullLogger())
+        );
+
+        self::assertTrue($client->emitsJsonLd('A'));
+        self::assertFalse($client->emitsJsonLd('B'), 'switch off');
+        self::assertFalse($client->emitsJsonLd('C'), 'not configured: the subscriber gets no date and adds nothing');
+        self::assertTrue($client->emitsJsonLd('D'), 'unset switch = default on');
+    }
+
+    /**
      * @param array<string, mixed> $body
      */
     private static function jsonResponse(array $body): MockResponse

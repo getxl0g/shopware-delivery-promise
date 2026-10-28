@@ -18,8 +18,8 @@ use Xl0g\DeliveryPromise\Storefront\Subscriber\StructuredDataSubscriber;
  * the product pages. Discovery half of agentic commerce; no auth needed (public hints only,
  * no API key). The content comes from the {@see AgentDiscoveryBuilder}.
  *
- * Both routes report the ACTUAL state of this sales channel's JSON-LD switch. If it is
- * off, the manifest does not announce fields the shop does not deliver; with Shopware's own product JSON-LD it names
+ * Both routes report the ACTUAL state of this sales channel's JSON-LD output (switch on AND connection
+ * configured). If the plugin writes none, the manifest does not announce fields the shop does not deliver; with Shopware's own product JSON-LD it names
  * handlingTime + transitTime instead of the x-xl0g-* fields, which the plugin does not write there.
  */
 #[Route(defaults: ['_routeScope' => ['storefront']])]
@@ -54,7 +54,10 @@ class DiscoveryController extends StorefrontController
      */
     private function widgetOnPage(Request $request): bool
     {
-        return $this->client->isProductWidgetEnabled($request->attributes->get('sw-sales-channel-id'));
+        $salesChannelId = $request->attributes->get('sw-sales-channel-id');
+
+        // Without a configured connection the widget renders nothing, whatever its switch says.
+        return $this->client->isProductWidgetEnabled($salesChannelId) && $this->client->isConfigured($salesChannelId);
     }
 
     /**
@@ -66,12 +69,13 @@ class DiscoveryController extends StorefrontController
     }
 
     /**
-     * If the sales channel cannot be resolved (the two routes sit at the domain root),
-     * the attribute is null — then {@see Xl0gPromiseClient::isJsonLdEnabled()} reads the global
-     * value instead of a channel value. That is the right answer for "no channel known", not a stopgap.
+     * Whether the plugin writes JSON-LD for this sales channel: the switch is on and the connection is configured
+     * ({@see Xl0gPromiseClient::emitsJsonLd()}) — the same condition under which {@see StructuredDataSubscriber} adds
+     * anything. If the sales channel cannot be resolved (the two routes sit at the domain root), the attribute is null
+     * and the global values are read instead of channel values. That is the right answer for "no channel known".
      */
     private function jsonLdEnabled(Request $request): bool
     {
-        return $this->client->isJsonLdEnabled($request->attributes->get('sw-sales-channel-id'));
+        return $this->client->emitsJsonLd($request->attributes->get('sw-sales-channel-id'));
     }
 }

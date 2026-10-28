@@ -48,7 +48,7 @@ class AgentDiscoveryBuilderTest extends TestCase
 
         self::assertSame([], $m['delivery_intelligence']['signals']);
         self::assertStringNotContainsString('x-xl0g-delivery-date', json_encode($m['delivery_intelligence']['signals']));
-        self::assertStringContainsString('switched off', $m['delivery_intelligence']['where']);
+        self::assertStringContainsString('writes no JSON-LD', $m['delivery_intelligence']['where']);
         // The rest of the manifest remains usable unchanged.
         self::assertSame('https://shop.example/sitemap.xml', $m['delivery_intelligence']['sitemap']);
         self::assertSame('discovery', $m['agentic_commerce']['role']);
@@ -117,6 +117,52 @@ class AgentDiscoveryBuilderTest extends TestCase
         // No optional fields where none are written (core JSON-LD) or JSON-LD is off.
         self::assertArrayNotHasKey('optional_signals', $b->manifest('https://shop.example', true, true));
         self::assertArrayNotHasKey('optional_signals', $b->manifest('https://shop.example', false, false));
+    }
+
+    /**
+     * Not emitted (switch off, or connection not configured — the caller folds both into $jsonLdEnabled = false):
+     * neither text mentions a field or the JSON-LD as a source; what is true is named — the visible element only when
+     * the widget is on, the public feed only when listed. Emitted: the optional fields are named. Both states.
+     */
+    public function testFieldsAreNamedOnlyInTheEmittedStateAndTheOtherStateDescribesOnlyWhatIsTrue(): void
+    {
+        $b = new AgentDiscoveryBuilder();
+        $feed = 'https://xl0g.test/t/api/ucp-feed';
+
+        // State 1: JSON-LD emitted (own block / SEO plugin markup): optional fields named, hedged.
+        $on = $b->manifest('https://shop.example', true, false, $feed, true);
+        $onTxt = $b->llmsTxt('https://shop.example', true, false, $feed, true);
+        self::assertSame(['x-xl0g-delivery-date', 'x-xl0g-cutoff-at'], $on['delivery_intelligence']['optional_signals']);
+        self::assertStringContainsString('x-xl0g-delivery-date', $onTxt);
+        self::assertStringContainsString('NOT guaranteed', $onTxt);
+
+        // State 2a: not emitted, widget on, feed listed: only the element and the feed are described.
+        $off = $b->manifest('https://shop.example', false, false, $feed, true);
+        $offTxt = $b->llmsTxt('https://shop.example', false, false, $feed, true);
+        self::assertSame([], $off['delivery_intelligence']['signals']);
+        self::assertArrayNotHasKey('optional_signals', $off);
+        self::assertStringNotContainsString('a precise delivery date', $offTxt);
+        self::assertStringNotContainsString('Delivery data is public on the product pages as JSON-LD', $offTxt);
+        self::assertStringContainsString('shows delivery dates to visitors on the product page', $offTxt);
+        self::assertStringContainsString('data-promised-date', $offTxt);
+        self::assertStringContainsString($feed, $offTxt);
+        self::assertSame('[data-xl0g-delivery-promise]', $off['delivery_intelligence']['page_element']['selector']);
+        self::assertSame($feed, $off['product_feed']['url']);
+        self::assertStringContainsString('shown to visitors on the product page', $off['delivery_intelligence']['where']);
+        // Nowhere does the not-emitted state call a field present (the only mentions are "no x-xl0g-* fields").
+        self::assertStringNotContainsString('x-xl0g-delivery-date', json_encode($off));
+        self::assertStringNotContainsString('x-xl0g-delivery-date', $offTxt);
+        self::assertStringNotContainsString('x-xl0g-cutoff-at', json_encode($off));
+
+        // State 2b: not emitted and no widget: no claim about dates shown on the page either.
+        $bare = $b->manifest('https://shop.example', false, false);
+        $bareTxt = $b->llmsTxt('https://shop.example', false, false);
+        self::assertStringNotContainsString('shown to visitors', $bare['delivery_intelligence']['where']);
+        self::assertStringNotContainsString('shows delivery dates to visitors', $bareTxt);
+        self::assertStringContainsString('does not expose delivery dates', $bareTxt);
+        self::assertArrayNotHasKey('page_element', $bare);
+        self::assertArrayNotHasKey('product_feed', $bare);
+        self::assertStringNotContainsString('x-xl0g-delivery-date', $bareTxt);
     }
 
     public function testWidgetElementIsNamedAsReliableSourceOnlyWhenTheWidgetIsOn(): void
