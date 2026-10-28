@@ -2,7 +2,7 @@
 
 All notable changes to this plugin. Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased] — Discovery texts promise only what the page reliably carries
+## [0.7.4] — 2026-10-28 — Discovery texts promise only what the page reliably carries
 
 - **`llms.txt` and the manifest no longer promise `x-xl0g-*` fields as certain.** The plugin cannot know, when `llms.txt`
   is requested, whether another plugin's product markup leaves the fields out (observed: a shop whose SEO plugin renders
