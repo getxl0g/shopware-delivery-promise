@@ -17,7 +17,7 @@ class AgentDiscoveryBuilderTest extends TestCase
         self::assertSame('xl0g-agent-discovery', $m['protocol']);
         self::assertSame('https://shop.example', $m['shop']['url']);
         self::assertSame('https://shop.example/sitemap.xml', $m['delivery_intelligence']['sitemap']);
-        self::assertContains('x-xl0g-delivery-date', $m['delivery_intelligence']['signals']);
+        self::assertSame(['https://schema.org/OfferShippingDetails'], $m['delivery_intelligence']['signals']);
         self::assertSame('discovery', $m['agentic_commerce']['role']);
     }
 
@@ -96,6 +96,66 @@ class AgentDiscoveryBuilderTest extends TestCase
         // Switched off stays switched off, core or not.
         self::assertSame([], $b->manifest('https://shop.example', false, true)['delivery_intelligence']['signals']);
         self::assertStringContainsString('does not expose', $b->llmsTxt('https://shop.example', false, true));
+    }
+
+    /**
+     * The fields are not rendered in every case (an SEO plugin's markup can leave them out), so the manifest
+     * lists them as optional, never as guaranteed signals, and says so.
+     */
+    public function testXl0gFieldsAreOptionalNeverGuaranteed(): void
+    {
+        $b = new AgentDiscoveryBuilder();
+        $m = $b->manifest('https://shop.example', true, false);
+        $txt = $b->llmsTxt('https://shop.example', true, false);
+
+        self::assertNotContains('x-xl0g-delivery-date', $m['delivery_intelligence']['signals']);
+        self::assertSame(['x-xl0g-delivery-date', 'x-xl0g-cutoff-at'], $m['delivery_intelligence']['optional_signals']);
+        self::assertStringContainsString('not guaranteed', $m['delivery_intelligence']['where']);
+        self::assertStringContainsString('NOT guaranteed', $txt);
+        self::assertStringContainsString('Do not rely', $txt);
+        self::assertStringNotContainsString('Read these to answer', $txt);
+        // No optional fields where none are written (core JSON-LD) or JSON-LD is off.
+        self::assertArrayNotHasKey('optional_signals', $b->manifest('https://shop.example', true, true));
+        self::assertArrayNotHasKey('optional_signals', $b->manifest('https://shop.example', false, false));
+    }
+
+    public function testWidgetElementIsNamedAsReliableSourceOnlyWhenTheWidgetIsOn(): void
+    {
+        $b = new AgentDiscoveryBuilder();
+
+        foreach ([[true, false], [true, true], [false, false]] as [$jsonLd, $core]) {
+            $m = $b->manifest('https://shop.example', $jsonLd, $core, null, true);
+            $txt = $b->llmsTxt('https://shop.example', $jsonLd, $core, null, true);
+
+            self::assertSame('[data-xl0g-delivery-promise]', $m['delivery_intelligence']['page_element']['selector']);
+            self::assertSame('data-promised-date', $m['delivery_intelligence']['page_element']['delivery_date_attribute']);
+            self::assertSame('data-cutoff-at', $m['delivery_intelligence']['page_element']['cutoff_attribute']);
+            self::assertStringContainsString('Reliable source of the date', $txt);
+            self::assertStringContainsString('data-promised-date', $txt);
+
+            // Widget off (also the default): the element is not promised.
+            $off = $b->manifest('https://shop.example', $jsonLd, $core, null, false);
+            self::assertArrayNotHasKey('page_element', $off);
+            self::assertArrayNotHasKey('page_element', $b->manifest('https://shop.example', $jsonLd, $core));
+            self::assertStringNotContainsString('data-promised-date', $b->llmsTxt('https://shop.example', $jsonLd, $core, null, false));
+            self::assertStringNotContainsString('data-promised-date', $b->llmsTxt('https://shop.example', $jsonLd, $core));
+        }
+    }
+
+    /**
+     * The shop of the original finding: JSON-LD on, widget on, third-party SEO markup. The text must neither
+     * promise the fields as certain nor claim the date is "in every product's JSON-LD".
+     */
+    public function testNoBranchPromisesTheFieldsOnEveryPage(): void
+    {
+        $b = new AgentDiscoveryBuilder();
+
+        foreach ([true, false] as $widget) {
+            $txt = $b->llmsTxt('https://shop.example', true, false, null, $widget);
+            self::assertStringNotContainsString('including a precise delivery date', $txt);
+            self::assertStringNotContainsString('Each product detail page', $txt);
+            self::assertStringContainsString('may embed', $txt);
+        }
     }
 
     public function testFeedIsListedInLlmsTxtAndManifestWhenKnown(): void

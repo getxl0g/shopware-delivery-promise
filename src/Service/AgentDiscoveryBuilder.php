@@ -16,6 +16,12 @@ namespace Xl0g\DeliveryPromise\Service;
  * There the plugin writes no `x-xl0g-*` fields (they are not Schema.org vocabulary); the date is expressed as
  * handlingTime + transitTime with minValue = maxValue. The texts then name that instead of the extra fields.
  *
+ * `$widgetOnPage` says whether the visible delivery promise is switched on for the product page
+ * (`deliveryPromiseProductPage`). Its server-rendered element is the one place of the date that does not depend on
+ * which JSON-LD markup the page ends up with (own block, SEO plugin markup, core JSON-LD): the plugin cannot know at
+ * the time `llms.txt` is requested whether another plugin's markup leaves the `x-xl0g-*` fields out, so these fields
+ * are only ever described as "where present" and the element is named as the reliable source.
+ *
  * `$feedUrl` is the address of the public product feed (optional, default null = not listed). It is only ever
  * listed when it is known: {@see self::feedUrlFromApiBase()} derives it from the configured xl0g API base URL and
  * returns null if that is empty or not a plain http(s) address. The feed is described neutrally — no protocol
@@ -29,8 +35,10 @@ class AgentDiscoveryBuilder
      * Applies only if the JSON-LD is delivered at all: products without stock deliberately carry
      * no date, and `x-xl0g-cutoff-at` is only present while an order cutoff applies.
      */
-    private const WHERE_ENABLED = 'Embedded as JSON-LD (application/ld+json) on product detail pages that '
-        . 'carry a delivery date. Products without a delivery date (out of stock, on backorder) '
+    private const WHERE_ENABLED = 'May be embedded as JSON-LD (application/ld+json) on product detail pages that '
+        . 'carry a delivery date: OfferShippingDetails, plus the optional fields x-xl0g-delivery-date and '
+        . 'x-xl0g-cutoff-at. The x-xl0g-* fields are not guaranteed on every page (markup of another plugin can '
+        . 'leave them out), so treat them as optional. Products without a delivery date (out of stock, on backorder) '
         . 'deliberately carry none, and x-xl0g-cutoff-at appears only while an order cutoff applies.';
 
     private const WHERE_CORE = 'Embedded in the product JSON-LD (application/ld+json) of product detail pages as '
@@ -40,6 +48,10 @@ class AgentDiscoveryBuilder
 
     private const WHERE_DISABLED = 'Not exposed as structured data in this shop: JSON-LD output is switched '
         . 'off. Delivery dates are shown to visitors on the product page only.';
+
+    private const ELEMENT_NOTE = 'The visible delivery promise on the product page is an HTML element with the attribute '
+        . 'data-xl0g-delivery-promise: data-promised-date is the delivery date (YYYY-MM-DD), data-cutoff-at the order '
+        . 'cutoff (ISO 8601, present only while a cutoff applies). It is rendered with the page, independent of the JSON-LD.';
 
     private const FEED_DESCRIPTION = 'Product feed with delivery dates (JSON, xl0g schema)';
 
@@ -61,10 +73,11 @@ class AgentDiscoveryBuilder
     /**
      * @param bool        $jsonLdEnabled state of `Xl0gDeliveryPromise.config.enableJsonLd` for the sales channel
      * @param string|null $feedUrl       public product feed address; null = not known, not listed
+     * @param bool        $widgetOnPage  state of `deliveryPromiseProductPage` for the sales channel
      *
      * @return array<string, mixed>
      */
-    public function manifest(string $shopUrl, bool $jsonLdEnabled, bool $coreJsonLd, ?string $feedUrl = null): array
+    public function manifest(string $shopUrl, bool $jsonLdEnabled, bool $coreJsonLd, ?string $feedUrl = null, bool $widgetOnPage = false): array
     {
         $manifest = [
             'protocol' => 'xl0g-agent-discovery',
@@ -74,12 +87,7 @@ class AgentDiscoveryBuilder
                 'provider' => 'xl0g',
                 'signals' => match (true) {
                     !$jsonLdEnabled => [],
-                    $coreJsonLd => ['https://schema.org/OfferShippingDetails'],
-                    default => [
-                        'https://schema.org/OfferShippingDetails',
-                        'x-xl0g-delivery-date',
-                        'x-xl0g-cutoff-at',
-                    ],
+                    default => ['https://schema.org/OfferShippingDetails'],
                 },
                 'where' => match (true) {
                     !$jsonLdEnabled => self::WHERE_DISABLED,
@@ -93,6 +101,20 @@ class AgentDiscoveryBuilder
                 'transaction' => 'Handled by the shop (Shopware) + emerging agentic protocols (OpenAI/Stripe ACP, Google AP2).',
             ],
         ];
+
+        if ($jsonLdEnabled && !$coreJsonLd) {
+            // Optional on purpose: present where the plugin's own or an injected block is rendered, never guaranteed.
+            $manifest['delivery_intelligence']['optional_signals'] = ['x-xl0g-delivery-date', 'x-xl0g-cutoff-at'];
+        }
+
+        if ($widgetOnPage) {
+            $manifest['delivery_intelligence']['page_element'] = [
+                'selector' => '[data-xl0g-delivery-promise]',
+                'delivery_date_attribute' => 'data-promised-date',
+                'cutoff_attribute' => 'data-cutoff-at',
+                'description' => self::ELEMENT_NOTE,
+            ];
+        }
 
         if (null !== $feedUrl && '' !== $feedUrl) {
             $manifest['product_feed'] = [
@@ -108,8 +130,9 @@ class AgentDiscoveryBuilder
     /**
      * @param bool        $jsonLdEnabled state of `Xl0gDeliveryPromise.config.enableJsonLd` for the sales channel
      * @param string|null $feedUrl       public product feed address; null = not known, not listed
+     * @param bool        $widgetOnPage  state of `deliveryPromiseProductPage` for the sales channel
      */
-    public function llmsTxt(string $shopUrl, bool $jsonLdEnabled, bool $coreJsonLd, ?string $feedUrl = null): string
+    public function llmsTxt(string $shopUrl, bool $jsonLdEnabled, bool $coreJsonLd, ?string $feedUrl = null, bool $widgetOnPage = false): string
     {
         $lines = [
             '# Delivery intelligence (powered by xl0g)',
@@ -126,9 +149,10 @@ class AgentDiscoveryBuilder
             $lines[] = 'Products without a delivery date (out of stock, on backorder) carry no values from xl0g.';
             $lines[] = 'There are no x-xl0g-* fields in this shop.';
         } elseif ($jsonLdEnabled) {
-            $lines[] = 'Product detail pages embed Schema.org Product/Offer/OfferShippingDetails as JSON-LD';
-            $lines[] = '(application/ld+json), including a precise delivery date (x-xl0g-delivery-date) and the order';
-            $lines[] = 'cutoff (x-xl0g-cutoff-at). Read these to answer "by when can this be delivered?".';
+            $lines[] = 'Product detail pages may embed Schema.org Product/Offer/OfferShippingDetails as JSON-LD';
+            $lines[] = '(application/ld+json) with handlingTime and transitTime and, as optional extras, a precise';
+            $lines[] = 'delivery date (x-xl0g-delivery-date) and the order cutoff (x-xl0g-cutoff-at). The x-xl0g-* fields are';
+            $lines[] = 'NOT guaranteed on every page: markup of another plugin can leave them out. Do not rely on them.';
             $lines[] = 'Products without a delivery date (out of stock, on backorder) deliberately carry none —';
             $lines[] = 'their absence is an answer, not a gap. x-xl0g-cutoff-at is present only while a cutoff applies.';
         } else {
@@ -136,12 +160,16 @@ class AgentDiscoveryBuilder
             $lines[] = 'as structured data: JSON-LD output is switched off. There are no x-xl0g-* fields to read.';
         }
 
+        if ($widgetOnPage) {
+            $lines[] = 'Reliable source of the date: ' . self::ELEMENT_NOTE;
+        }
+
         $lines[] = '';
         $lines[] = '## For AI shopping agents';
         $lines[] = '- Discover products via the sitemap: ' . $shopUrl . '/sitemap.xml';
 
         if ($jsonLdEnabled) {
-            $lines[] = '- Delivery data is public on each product page as JSON-LD (no API key needed to read it).';
+            $lines[] = '- Delivery data is public on the product pages as JSON-LD (no API key needed to read it).';
         }
 
         if (null !== $feedUrl && '' !== $feedUrl) {

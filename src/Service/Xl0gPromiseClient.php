@@ -202,6 +202,14 @@ class Xl0gPromiseClient
         return AgentDiscoveryBuilder::feedUrlFromApiBase($this->baseUrl($salesChannelId));
     }
 
+    /**
+     * Whether the visible delivery promise is switched on for the product page (default off, as in config.xml).
+     */
+    public function isProductWidgetEnabled(?string $salesChannelId = null): bool
+    {
+        return (bool) $this->systemConfig->get('Xl0gDeliveryPromise.config.deliveryPromiseProductPage', $salesChannelId);
+    }
+
     public function isJsonLdEnabled(?string $salesChannelId = null): bool
     {
         $v = $this->systemConfig->get('Xl0gDeliveryPromise.config.enableJsonLd', $salesChannelId);

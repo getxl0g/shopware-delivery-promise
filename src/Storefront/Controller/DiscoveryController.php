@@ -35,7 +35,7 @@ class DiscoveryController extends StorefrontController
     public function llmsTxt(Request $request): Response
     {
         return new Response(
-            $this->builder->llmsTxt($request->getSchemeAndHttpHost(), $this->jsonLdEnabled($request), StructuredDataSubscriber::isCoreJsonLdActive(), $this->feedUrl($request)),
+            $this->builder->llmsTxt($request->getSchemeAndHttpHost(), $this->jsonLdEnabled($request), StructuredDataSubscriber::isCoreJsonLdActive(), $this->feedUrl($request), $this->widgetOnPage($request)),
             Response::HTTP_OK,
             ['Content-Type' => 'text/plain; charset=utf-8']
         );
@@ -45,8 +45,16 @@ class DiscoveryController extends StorefrontController
     public function wellKnown(Request $request): JsonResponse
     {
         return new JsonResponse(
-            $this->builder->manifest($request->getSchemeAndHttpHost(), $this->jsonLdEnabled($request), StructuredDataSubscriber::isCoreJsonLdActive(), $this->feedUrl($request))
+            $this->builder->manifest($request->getSchemeAndHttpHost(), $this->jsonLdEnabled($request), StructuredDataSubscriber::isCoreJsonLdActive(), $this->feedUrl($request), $this->widgetOnPage($request))
         );
+    }
+
+    /**
+     * The visible delivery promise carries the date server-rendered; the discovery texts name it only when it is on.
+     */
+    private function widgetOnPage(Request $request): bool
+    {
+        return $this->client->isProductWidgetEnabled($request->attributes->get('sw-sales-channel-id'));
     }
 
     /**

@@ -2,6 +2,19 @@
 
 All notable changes to this plugin. Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased] — Discovery texts promise only what the page reliably carries
+
+- **`llms.txt` and the manifest no longer promise `x-xl0g-*` fields as certain.** The plugin cannot know, when `llms.txt`
+  is requested, whether another plugin's product markup leaves the fields out (observed: a shop whose SEO plugin renders
+  its own Product block, with the widget showing the date but no `x-xl0g-*` field in the JSON-LD). The texts now say
+  “may embed … NOT guaranteed”; in the manifest `x-xl0g-delivery-date` and `x-xl0g-cutoff-at` move from `signals` to the
+  new `optional_signals`.
+- **The reliable source is named instead:** with the product page widget on, `llms.txt` and the manifest
+  (`delivery_intelligence.page_element`) point to the server-rendered element `[data-xl0g-delivery-promise]`
+  (`data-promised-date`, `data-cutoff-at`). Off ⇒ not mentioned.
+- **Not included:** no change to which JSON-LD the page carries; markup of SEO plugins other than DreiSC SEO Pro is still
+  not recognised (the plugin's own block is emitted next to it).
+
 ## [0.7.3] — 2026-10-27 — Optional product feed in the agent discovery
 
 - **Discovery can point to the product feed (opt-in).** New switch “List public product feed in llms.txt and

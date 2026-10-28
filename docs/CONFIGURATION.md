@@ -34,9 +34,14 @@ If either field is missing, the plugin shows **nothing** — no broken widget, n
 
 | Situation | Product page | `llms.txt` + manifest |
 |---|---|---|
-| JSON-LD **on**, own block or SEO plugin markup | `OfferShippingDetails` with `handlingTime` and `transitTime` from xl0g, plus `x-xl0g-delivery-date` and, while an order cutoff applies, `x-xl0g-cutoff-at` | name both fields and add that products without a date deliberately carry none |
+| JSON-LD **on**, own block or SEO plugin markup | `OfferShippingDetails` with `handlingTime` and `transitTime` from xl0g, plus `x-xl0g-delivery-date` and, while an order cutoff applies, `x-xl0g-cutoff-at` | name `handlingTime`/`transitTime`; list `x-xl0g-delivery-date` and `x-xl0g-cutoff-at` only as **optional** (markup of another plugin can leave them out) and add that products without a date deliberately carry none |
 | JSON-LD **on**, Shopware’s own JSON-LD (`JSON_LD_DATA`) | `OfferShippingDetails` with `handlingTime` and `transitTime` from xl0g, **no** `x-xl0g-*` fields (not Schema.org vocabulary, the core block stays validator-clean) | name handlingTime + transitTime (minValue = maxValue), no `x-xl0g-*` fields |
 | JSON-LD **off** | no JSON-LD from the plugin | name **no** fields, but say that this shop does not provide the dates as structured data |
+
+With “xl0g Delivery Promise on product detail page” on, `llms.txt` and the manifest (`page_element`) also name the
+server-rendered element `[data-xl0g-delivery-promise]` as the reliable source: `data-promised-date` is the delivery
+date, `data-cutoff-at` the order cutoff (present only while one applies). Unlike the JSON-LD fields it does not depend
+on which markup the page ends up with. With the switch off the element is not mentioned.
 
 `handlingTime` is the number of business days until the ship date from xl0g; together with `transitTime` it gives
 exactly the date the page shows. A handling time from the Shopware delivery time (e.g. 1–3 days) is replaced; without a
