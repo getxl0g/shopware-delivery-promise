@@ -2,6 +2,21 @@
 
 All notable changes to this plugin. Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.7.5] — 2026-10-28 — Discovery follows what the plugin really writes, per sales channel
+
+- **`llms.txt` and the manifest now follow the plugin's actual JSON-LD output.** Until now they followed the switch
+  “Emit JSON-LD on the product page” alone. The plugin writes JSON-LD only if that switch is on **and** the xl0g
+  connection (API base URL and key) is configured for the sales channel; without a connection no date is fetched and
+  the product page carries no `x-xl0g-*` fields, although the switch is on by default. New check
+  `Xl0gPromiseClient::emitsJsonLd()` (per sales channel) drives both routes.
+- **Where the fields cannot appear, the texts say only what is true:** no `x-xl0g-delivery-date` / `x-xl0g-cutoff-at`
+  and no “JSON-LD on the product pages” (also not with Shopware's own JSON-LD, where the plugin never writes them). The
+  visible delivery text is mentioned only if the product page widget is on and the connection is configured; the
+  `[data-xl0g-delivery-promise]` element and the public feed are named only when they exist.
+- Where the fields may appear, the text now names themes as well as other plugins as a reason they can be absent.
+- **Not included:** the plugin still cannot see whether a theme or another SEO plugin leaves its own JSON-LD block out
+  (the fields stay “optional”); no change to which JSON-LD the page carries.
+
 ## [0.7.4] — 2026-10-28 — Discovery texts promise only what the page reliably carries
 
 - **`llms.txt` and the manifest no longer promise `x-xl0g-*` fields as certain.** The plugin cannot know, when `llms.txt`
