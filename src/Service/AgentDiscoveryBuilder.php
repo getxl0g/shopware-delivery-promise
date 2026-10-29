@@ -54,9 +54,24 @@ class AgentDiscoveryBuilder
 
     private const ELEMENT_NOTE = 'The visible delivery promise on the product page is an HTML element with the attribute '
         . 'data-xl0g-delivery-promise: data-promised-date is the delivery date (YYYY-MM-DD), data-cutoff-at the order '
-        . 'cutoff (ISO 8601, present only while a cutoff applies). It is rendered with the page, independent of the JSON-LD.';
+        . 'cutoff (ISO 8601, present only while a cutoff applies). The visible date inside it is a <time datetime="YYYY-MM-DD"> '
+        . 'element carrying the full ISO date (the visible text has no year); the order countdown next to it '
+        . '(.xl0g-dp-countdown) changes by the minute and is not the delivery date. It is rendered with the page, '
+        . 'independent of the JSON-LD.';
 
     private const FEED_DESCRIPTION = 'Product feed with delivery dates (JSON, xl0g schema)';
+
+    /**
+     * Where the delivery promise sits per product in the public feed (xl0g schema). Named so that an agent reading
+     * llms.txt or the manifest knows which fields to read; the feed itself is the source of truth.
+     */
+    private const FEED_DELIVERY_FIELDS = [
+        'promised_date' => 'xl0gDelivery.promisedDate',
+        'cutoff_at' => 'xl0gDelivery.cutoffAt',
+    ];
+
+    private const FEED_FIELDS_NOTE = 'Delivery promise per product in the feed: xl0gDelivery.promisedDate (delivery date, '
+        . 'YYYY-MM-DD) and xl0gDelivery.cutoffAt (order cutoff, ISO 8601, present only while a cutoff applies).';
 
     /**
      * The public product feed lives at `{apiBaseUrl}/ucp-feed` of the xl0g tenant (no authentication).
@@ -125,6 +140,7 @@ class AgentDiscoveryBuilder
                 'url' => $feedUrl,
                 'format' => 'application/json',
                 'description' => self::FEED_DESCRIPTION,
+                'delivery_fields' => self::FEED_DELIVERY_FIELDS,
             ];
         }
 
@@ -182,6 +198,7 @@ class AgentDiscoveryBuilder
 
         if (null !== $feedUrl && '' !== $feedUrl) {
             $lines[] = '- ' . self::FEED_DESCRIPTION . ': ' . $feedUrl;
+            $lines[] = '  ' . self::FEED_FIELDS_NOTE;
         }
 
         $lines[] = '- Agent discovery manifest: ' . $shopUrl . '/.well-known/xl0g-delivery.json';

@@ -41,7 +41,15 @@
     {%- if xl0gPromise -%}
         {%- set xl0gCd = xl0g_delivery_countdown(xl0gPromise.cutoffAt) -%}
         {%- set xl0gDateHtml -%}
-            <b class="xl0g-dp-date">{{ xl0gPromise.promisedDate|format_date(pattern='EEEE, d. MMMM') }}</b>
+            {#- <time datetime> carries the full ISO date (the visible text has no year); only for a plain YYYY-MM-DD,
+                exactly like the JS render. -#}
+            <b class="xl0g-dp-date">
+                {%- if xl0gPromise.promisedDate matches '/^\\d{4}-\\d{2}-\\d{2}$/' -%}
+                    <time datetime="{{ xl0gPromise.promisedDate }}">{{ xl0gPromise.promisedDate|format_date(pattern='EEEE, d. MMMM') }}</time>
+                {%- else -%}
+                    {{ xl0gPromise.promisedDate|format_date(pattern='EEEE, d. MMMM') }}
+                {%- endif -%}
+            </b>
         {%- endset -%}
         {# Keep the markup byte-identical to the JS render (_render in the plugin JS): no whitespace
            between indicator and line (spacing = margin-right of the dot), exactly one space before

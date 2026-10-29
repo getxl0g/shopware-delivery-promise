@@ -98,10 +98,13 @@ export default class Xl0gDeliveryPromisePlugin extends Plugin {
         const d = this.el.dataset;
         const template = d.template || '{date}';
 
-        const line = template.replace(
-            '{date}',
-            `<b class="xl0g-dp-date">${this._escape(this._formatDate(data.promised_date))}</b>`
-        );
+        // <time datetime> carries the full ISO date (the visible text has no year); only for a plain
+        // YYYY-MM-DD, exactly like the Twig render.
+        const dateText = this._escape(this._formatDate(data.promised_date));
+        const dateHtml = /^\d{4}-\d{2}-\d{2}$/.test(data.promised_date)
+            ? `<time datetime="${data.promised_date}">${dateText}</time>`
+            : dateText;
+        const line = template.replace('{date}', `<b class="xl0g-dp-date">${dateHtml}</b>`);
         const indicator = d.statusIndicator ? '<span class="xl0g-status-indicator success"></span>' : '';
 
         // Keep the markup byte-identical to the widget templates, otherwise the replacement

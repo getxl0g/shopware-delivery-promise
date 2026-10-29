@@ -41,7 +41,9 @@ If either field is missing, the plugin shows **nothing** — no broken widget, n
 With “xl0g Delivery Promise on product detail page” on, `llms.txt` and the manifest (`page_element`) also name the
 server-rendered element `[data-xl0g-delivery-promise]` as the reliable source: `data-promised-date` is the delivery
 date, `data-cutoff-at` the order cutoff (present only while one applies). Unlike the JSON-LD fields it does not depend
-on which markup the page ends up with. With the switch off the element is not mentioned.
+on which markup the page ends up with. The visible date inside it is a `<time datetime="YYYY-MM-DD">` element with the
+full ISO date (the visible text has no year); the order countdown next to it (`.xl0g-dp-countdown`) changes by the
+minute and is not the delivery date. With the switch off the element is not mentioned.
 
 `handlingTime` is the number of business days until the ship date from xl0g; together with `transitTime` it gives
 exactly the date the page shows. A handling time from the Shopware delivery time (e.g. 1–3 days) is replaced; without a
@@ -52,7 +54,8 @@ xl0g schema)”, manifest key `product_feed`) at `{xl0g API base URL}/ucp-feed`,
 `https://xl0g.com/<tenant>/api/ucp-feed`. It is listed **only if** the switch “List public product feed in llms.txt and manifest” is on (default off) **and**
 the **xl0g API base URL** is a plain http(s) address; otherwise nothing is listed. The plugin cannot see whether the
 feed is activated for your tenant on the xl0g side — switch it on only after xl0g confirmed that, or the listed address
-will answer 404.
+will answer 404. When listed, the text also names where the delivery promise sits per product in the feed:
+`xl0gDelivery.promisedDate` and `xl0gDelivery.cutoffAt` (manifest: `product_feed.delivery_fields`).
 
 > **Checking a shop:** `curl -s https://<shop>/.well-known/xl0g-delivery.json` shows under
 > `delivery_intelligence.signals` what the shop announces; cross-check on a product page:

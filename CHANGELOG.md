@@ -2,6 +2,18 @@
 
 All notable changes to this plugin. Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+
+- **The visible delivery date on the product page is machine-readable as `<time datetime="YYYY-MM-DD">`.** The text has
+  no year (“Monday, 2. November”); the element carries the full ISO date. Twig first render and JS re-render (and the
+  shipped bundle) stay byte-identical; only a plain `YYYY-MM-DD` gets the element. `data-promised-date` stays. The order
+  countdown remains its own element (`.xl0g-dp-countdown`, `role="timer"`) and the discovery texts say it is not the
+  delivery date.
+- **`llms.txt` and the manifest name the delivery fields of the product feed** (when the feed is listed):
+  `xl0gDelivery.promisedDate`, `xl0gDelivery.cutoffAt`; manifest key `product_feed.delivery_fields`.
+- **Not included:** no date in the JSON-LD (Schema.org has no absolute delivery-date property; the core-JSON-LD mode
+  deliberately stays free of `x-xl0g-*` fields); the feed listing stays opt-in (`listPublicFeed`, off by default).
+
 ## [0.7.5] — 2026-10-28 — Discovery follows what the plugin really writes, per sales channel
 
 - **`llms.txt` and the manifest now follow the plugin's actual JSON-LD output.** Until now they followed the switch

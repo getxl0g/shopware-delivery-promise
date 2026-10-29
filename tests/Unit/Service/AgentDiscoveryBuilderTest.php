@@ -177,6 +177,8 @@ class AgentDiscoveryBuilderTest extends TestCase
             self::assertSame('data-promised-date', $m['delivery_intelligence']['page_element']['delivery_date_attribute']);
             self::assertSame('data-cutoff-at', $m['delivery_intelligence']['page_element']['cutoff_attribute']);
             self::assertStringContainsString('Reliable source of the date', $txt);
+            self::assertStringContainsString('<time datetime="YYYY-MM-DD">', $txt);
+            self::assertStringContainsString('is not the delivery date', $txt);
             self::assertStringContainsString('data-promised-date', $txt);
 
             // Widget off (also the default): the element is not promised.
@@ -215,6 +217,13 @@ class AgentDiscoveryBuilderTest extends TestCase
         self::assertStringContainsString('Product feed with delivery dates (JSON, xl0g schema): ' . $feed, $txt);
         self::assertSame($feed, $m['product_feed']['url']);
         self::assertSame('application/json', $m['product_feed']['format']);
+        // An agent can find the delivery-promise fields without opening the feed first.
+        self::assertStringContainsString('xl0gDelivery.promisedDate', $txt);
+        self::assertStringContainsString('xl0gDelivery.cutoffAt', $txt);
+        self::assertSame(
+            ['promised_date' => 'xl0gDelivery.promisedDate', 'cutoff_at' => 'xl0gDelivery.cutoffAt'],
+            $m['product_feed']['delivery_fields']
+        );
         // Neutral wording: no protocol conformance is claimed.
         self::assertStringNotContainsStringIgnoringCase('UCP', $m['product_feed']['description']);
         self::assertStringNotContainsStringIgnoringCase('ACP-compliant', $txt);
@@ -233,6 +242,7 @@ class AgentDiscoveryBuilderTest extends TestCase
 
             self::assertStringNotContainsString('Product feed', $txt);
             self::assertStringNotContainsString('ucp-feed', $txt);
+            self::assertStringNotContainsString('xl0gDelivery', $txt);
             self::assertArrayNotHasKey('product_feed', $m);
         }
         // Default (parameter omitted) behaves like null.
