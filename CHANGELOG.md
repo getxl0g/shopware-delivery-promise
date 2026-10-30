@@ -2,7 +2,7 @@
 
 All notable changes to this plugin. Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
+## [0.7.6] — 2026-10-30 — The delivery date on the product page is machine-readable
 
 - **The visible delivery date on the product page is machine-readable as `<time datetime="YYYY-MM-DD">`.** The text has
   no year (“Monday, 2. November”); the element carries the full ISO date. Twig first render and JS re-render (and the

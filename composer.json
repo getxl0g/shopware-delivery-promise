@@ -1,7 +1,7 @@
 {
     "name": "xl0g/shopware-delivery-promise",
     "description": "xl0g Delivery Promise for Shopware 6: the real delivery date calculated by xl0g, rendered server-side on the product page and per cart line item, merged into the product JSON-LD for Google and AI assistants, with an invitation to agents (llms.txt).",
-    "version": "0.7.5",
+    "version": "0.7.6",
     "type": "shopware-platform-plugin",
     "license": "MIT",
     "keywords": [
