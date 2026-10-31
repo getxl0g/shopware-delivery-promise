@@ -21,6 +21,7 @@ in the backend), and the language fits the multilingual shop natively.
 | **HTTP cache** | `Service/RenderedPromiseCollector` + `Storefront/Subscriber/HttpCacheCutoffSubscriber` | Caps the product page’s `s-maxage` at the cutoff of the rendered date |
 | **Proxy** | `Storefront/Controller/DeliveryPromiseController` | Thin JSON proxy for the widget JS (key stays server-side), `max-age` capped at the cutoff |
 | **Discovery** | `Storefront/Controller/DiscoveryController` + `Service/AgentDiscoveryBuilder` | `/llms.txt` + `/.well-known/xl0g-delivery.json` for AI agents — announce only what the shop delivers |
+| **Shop MCP** | `Storefront/Controller/McpController` + `Service/ShopMcpProxy` | `POST /mcp` forwarded to the tenant's xl0g MCP server with the shop-side key (two public tools, caller secrets never travel, per-address limit) + `/.well-known/mcp/server-card.json` |
 | **Storefront** | `Resources/views` + `Resources/app/storefront` | Twig overrides + JS plugin (countdown, refetch after the cutoff) |
 | **Snippets** | `Resources/snippet/storefront.*.json` | Text templates per language/sales channel |
 | **Config** | `Resources/config/config.xml` | Admin configuration per sales channel |
@@ -120,7 +121,7 @@ src/
   Xl0gDeliveryPromise.php              plugin base class (creates the shipping method mapping field)
   Service/                             client, DTO, resolver, country offset, JSON-LD builder, collector
   Storefront/
-    Controller/                        DeliveryPromiseController · DiscoveryController
+    Controller/                        DeliveryPromiseController · DiscoveryController · McpController
     Subscriber/                        StructuredDataSubscriber · HttpCacheCutoffSubscriber
   Twig/                                DeliveryPromiseTwigExtension · StructuredDataTwigExtension
   Resources/

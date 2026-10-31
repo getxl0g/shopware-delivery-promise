@@ -115,6 +115,17 @@ standard shipping method by mistake. Products without a value in the custom fiel
   makes the product use that shipping method’s xl0g mapping. If the xl0g API does not know it, the
   widget falls back to the default once — server-side and in the JS.
 
+## Card “MCP server for AI assistants”
+
+| Field | Default | Meaning |
+|---|---|---|
+| **Offer the xl0g MCP server on this shop** | off | Serves `POST https://<shop>/mcp`: an MCP server that needs no API key from the caller and is answered by xl0g for this tenant — the tools `delivery_date` and `product_details` only. Also serves the server card `/.well-known/mcp/server-card.json` and names the server in `llms.txt` and the manifest. All of that only while the switch is on **and** the key below and the API base URL are set; otherwise the addresses answer 404 and nothing is announced. |
+| **API key for the shop MCP** | — | A separate xl0g key with the `mcp:public` permission only (xl0g dashboard: Settings → API keys → “Shop MCP”, or the card “Delivery information for AI assistants”). Kept server-side. A key with broader rights works too, but the plugin still passes only the two tools — use the narrow key anyway. |
+
+The address of the tenant's MCP server is derived from the API base URL (`…/api` → `…/mcp`). Per address the shop
+accepts 60 requests per minute; an `Origin` header must be absent or the shop's own host; a failure of xl0g is
+returned as a tool result with `isError`, never as an error page.
+
 ## Card “International delivery times”
 
 The xl0g API knows no destination country — it returns the date for the base country (DE). For other

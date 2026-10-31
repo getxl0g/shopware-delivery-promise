@@ -2,6 +2,25 @@
 
 All notable changes to this plugin. Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.8.0] — 2026-10-31 — The shop has its own MCP server, answered by xl0g
+
+- **`POST /mcp` on the shop domain: an MCP server for AI assistants that needs no API key from the caller.** The plugin
+  forwards each message to the xl0g MCP server of the tenant with a key kept server-side (new card “MCP server for AI
+  assistants”: switch, off by default, and “API key for the shop MCP”) and returns xl0g's answer unchanged, so both
+  protocol versions (2025-06-18 with `initialize`, 2026-07-28 without) are spoken by xl0g, not reimplemented here.
+  Only the two public tools pass: `delivery_date` and `product_details`; `tools/call` for any other name is refused
+  in the shop (-32602) and `tools/list` is filtered. The key should carry only the xl0g permission `mcp:public`,
+  which opens exactly these two tools on xl0g's side; the filter in the shop is the second lock.
+- **What never leaves the shop:** the caller's own `X-API-Key`, `Authorization`, `Cookie` and `Origin`. Only the MCP
+  standard headers (`MCP-Protocol-Version`, `Mcp-Method`, `Mcp-Name`) travel. The `Origin` header is validated (none,
+  or the shop's own host), the body is capped at 16 KB, each address gets 60 requests per minute (counted in the
+  object cache), and a failure of xl0g is a tool result with `isError`, never a 5xx from the shop.
+- **Discovery:** `GET /.well-known/mcp/server-card.json` (MCP server card with one remote, no variables, no headers),
+  a line in `llms.txt` and a `mcp` block in the manifest — all three only while the shop MCP is offered for the sales
+  channel; otherwise 404 and nothing announced.
+- **Not included:** no further tools over the shop (packing, master data, forecast stay behind the contractual
+  access), no registry entry per shop, no own `initialize` in the plugin.
+
 ## [0.7.6] — 2026-10-30 — The delivery date on the product page is machine-readable
 
 - **The visible delivery date on the product page is machine-readable as `<time datetime="YYYY-MM-DD">`.** The text has

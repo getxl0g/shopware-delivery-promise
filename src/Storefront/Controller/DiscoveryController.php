@@ -8,6 +8,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Xl0g\DeliveryPromise\Service\AgentDiscoveryBuilder;
+use Xl0g\DeliveryPromise\Service\ShopMcpProxy;
 use Xl0g\DeliveryPromise\Service\Xl0gPromiseClient;
 use Xl0g\DeliveryPromise\Storefront\Subscriber\StructuredDataSubscriber;
 
@@ -28,6 +29,7 @@ class DiscoveryController extends StorefrontController
     public function __construct(
         private readonly AgentDiscoveryBuilder $builder,
         private readonly Xl0gPromiseClient $client,
+        private readonly ShopMcpProxy $mcp,
     ) {
     }
 
@@ -35,7 +37,7 @@ class DiscoveryController extends StorefrontController
     public function llmsTxt(Request $request): Response
     {
         return new Response(
-            $this->builder->llmsTxt($request->getSchemeAndHttpHost(), $this->jsonLdEnabled($request), StructuredDataSubscriber::isCoreJsonLdActive(), $this->feedUrl($request), $this->widgetOnPage($request)),
+            $this->builder->llmsTxt($request->getSchemeAndHttpHost(), $this->jsonLdEnabled($request), StructuredDataSubscriber::isCoreJsonLdActive(), $this->feedUrl($request), $this->widgetOnPage($request), $this->mcpUrl($request)),
             Response::HTTP_OK,
             ['Content-Type' => 'text/plain; charset=utf-8']
         );
@@ -45,8 +47,16 @@ class DiscoveryController extends StorefrontController
     public function wellKnown(Request $request): JsonResponse
     {
         return new JsonResponse(
-            $this->builder->manifest($request->getSchemeAndHttpHost(), $this->jsonLdEnabled($request), StructuredDataSubscriber::isCoreJsonLdActive(), $this->feedUrl($request), $this->widgetOnPage($request))
+            $this->builder->manifest($request->getSchemeAndHttpHost(), $this->jsonLdEnabled($request), StructuredDataSubscriber::isCoreJsonLdActive(), $this->feedUrl($request), $this->widgetOnPage($request), $this->mcpUrl($request))
         );
+    }
+
+    /**
+     * Address of the shop's MCP server; null (not listed) unless the shop offers it for this sales channel.
+     */
+    private function mcpUrl(Request $request): ?string
+    {
+        return $this->mcp->offers($request->attributes->get('sw-sales-channel-id')) ? $request->getSchemeAndHttpHost() . '/mcp' : null;
     }
 
     /**

@@ -19,6 +19,7 @@ Google and AI assistants such as ChatGPT, Claude or Perplexity answer “When wi
 | **Shipping methods** | xl0g shipping method per selected shipping method and per product; excluded shipping methods (e.g. freight) keep Shopware’s display | mapping fields, “Excluded shipping methods” |
 | **Other delivery countries** | additional transit days per country | “International delivery times” |
 | **Invitation to AI assistants** | `/llms.txt` and `/.well-known/xl0g-delivery.json` tell agents where the date is — and only what the shop actually delivers | follows the JSON-LD setting |
+| **MCP server on the shop domain** | `POST /mcp`: an AI assistant asks for the delivery date or the product details of a product number and xl0g answers for this shop — no API key needed by the caller; server card under `/.well-known/mcp/server-card.json` | “Offer the xl0g MCP server on this shop” (off) + a key with the `mcp:public` permission |
 | **Report page views to xl0g** | per product page the product number and the kind of visitor (person, AI agent, search engine, tool); visible in xl0g under “Product Check for AI → Who visits?” | “Report page views to xl0g” (off) |
 
 ## The principle: numbers from xl0g, language in the shop
@@ -29,7 +30,9 @@ in the admin without touching xl0g.
 
 ## Privacy and security
 
-- **The API key stays in the shop.** The browser only talks to the shop; the shop asks xl0g server-side.
+- **The API key stays in the shop.** The browser only talks to the shop; the shop asks xl0g server-side. The same holds
+  for the shop MCP: its key is kept server-side, a caller's own key or cookie is never forwarded, and only the two
+  public tools pass.
 - **No personal data to xl0g.** Even with page-view reporting on, only the product number, the shop host and the kind of
   visitor are sent. The plugin classifies the visitor in the shop; user agent, IP address, cookies, session and cart never
   leave the shop.

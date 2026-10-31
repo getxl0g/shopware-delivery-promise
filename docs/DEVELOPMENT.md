@@ -45,7 +45,7 @@ vendor/bin/phpunit               # uses phpunit.xml.dist
 Covered: `PromiseResult` (parsing, country offset, cache lifetime, handling days), `StructuredDataBuilder` (all three
 JSON-LD modes), `Xl0gPromiseClient` (cache, negative cache, country offset, page view report), `ShippingMethodResolver`,
 `CountryTransitProvider`, `RenderedPromiseCollector`, `HttpCacheCutoffSubscriber`, the Twig extensions,
-`VisitorClassifier` and `AgentDiscoveryBuilder`. They run **without a kernel**.
+`VisitorClassifier`, `AgentDiscoveryBuilder` and `ShopMcpProxy` (forwarding, filter, limit, origin). They run **without a kernel**.
 
 ## Structure
 
@@ -54,7 +54,7 @@ Details in [ARCHITECTURE.md](ARCHITECTURE.md). In short:
 | Folder | Contents |
 |---|---|
 | `Service/` | Logic: API client, DTO, shipping method resolver, country offset, JSON-LD builder, visitor classifier, discovery builder. |
-| `Storefront/Controller/` | Thin endpoints: promise proxy, page view beacon, discovery (llms.txt / well-known). |
+| `Storefront/Controller/` | Thin endpoints: promise proxy, page view beacon, discovery (llms.txt / well-known), shop MCP (`/mcp`, server card). |
 | `Storefront/Subscriber/` | JSON-LD on the product page (+ page view report for agents), HTTP cache capping at the cutoff. |
 | `Twig/` | Server-side first render of the widget, merge into Shopware's own JSON-LD. |
 | `Resources/` | Config, routes, services, Twig, storefront JS, snippets, logo. |

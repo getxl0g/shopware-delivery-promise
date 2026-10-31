@@ -272,4 +272,59 @@ class AgentDiscoveryBuilderTest extends TestCase
         yield 'query string' => ['https://xl0g.com/<tenant>/api?x=1', null];
         yield 'inner whitespace' => ['https://xl0g.com/<tenant> /api', null];
     }
+
+    /**
+     * The shop MCP (plugin 0.8.0): address derived from the API base URL by swapping the last segment; anything that is
+     * not a plain http(s) URL ending in /api yields null, so nothing is offered or listed by accident.
+     */
+    public function testMcpUrlFromApiBase(): void
+    {
+        self::assertSame('https://xl0g.test/tenant/mcp', AgentDiscoveryBuilder::mcpUrlFromApiBase('https://xl0g.test/tenant/api'));
+        self::assertSame('https://xl0g.test/tenant/mcp', AgentDiscoveryBuilder::mcpUrlFromApiBase(' https://xl0g.test/tenant/api/ '));
+        self::assertNull(AgentDiscoveryBuilder::mcpUrlFromApiBase(''));
+        self::assertNull(AgentDiscoveryBuilder::mcpUrlFromApiBase('https://xl0g.test/tenant'));
+        self::assertNull(AgentDiscoveryBuilder::mcpUrlFromApiBase('https://xl0g.test/tenant/api?x=1'));
+        self::assertNull(AgentDiscoveryBuilder::mcpUrlFromApiBase('ftp://xl0g.test/tenant/api'));
+        self::assertNull(AgentDiscoveryBuilder::mcpUrlFromApiBase('https://xl0g.test/tenant/api x'));
+    }
+
+    /** The MCP server is named in llms.txt and the manifest only when the shop offers it. */
+    public function testMcpIsListedOnlyWhenOffered(): void
+    {
+        $b = new AgentDiscoveryBuilder();
+        $mcp = 'https://shop.example/mcp';
+
+        $txt = $b->llmsTxt('https://shop.example', true, false, null, false, $mcp);
+        $m = $b->manifest('https://shop.example', true, false, null, false, $mcp);
+        self::assertStringContainsString('- MCP server (no API key needed): https://shop.example/mcp', $txt);
+        self::assertStringContainsString('delivery_date', $txt);
+        self::assertStringContainsString('product_details', $txt);
+        self::assertStringContainsString('https://shop.example/.well-known/mcp/server-card.json', $txt);
+        self::assertSame($mcp, $m['mcp']['url']);
+        self::assertSame('streamable-http', $m['mcp']['transport']);
+        self::assertSame(['delivery_date', 'product_details'], $m['mcp']['tools']);
+        self::assertSame('https://shop.example/.well-known/mcp/server-card.json', $m['mcp']['server_card']);
+
+        $off = $b->llmsTxt('https://shop.example', true, false);
+        self::assertStringNotContainsString('MCP', $off);
+        self::assertArrayNotHasKey('mcp', $b->manifest('https://shop.example', true, false));
+    }
+
+    /** The server card: one remote without variables and without headers, so an assistant can connect as it is. */
+    public function testServerCard(): void
+    {
+        $card = (new AgentDiscoveryBuilder())->serverCard('https://shop.example', 'https://shop.example/mcp');
+
+        self::assertSame('https://static.modelcontextprotocol.io/schemas/v1/server-card.schema.json', $card['$schema']);
+        self::assertSame('com.xl0g.shop/shop.example', $card['name']);
+        self::assertStringStartsWith('shop.example — ', $card['title']);
+        self::assertSame('https://shop.example/', $card['websiteUrl']);
+        self::assertCount(1, $card['remotes']);
+        self::assertSame('streamable-http', $card['remotes'][0]['type']);
+        self::assertSame('https://shop.example/mcp', $card['remotes'][0]['url']);
+        self::assertSame(['2026-07-28', '2025-06-18'], $card['remotes'][0]['supportedProtocolVersions']);
+        self::assertArrayNotHasKey('variables', $card['remotes'][0]);
+        self::assertArrayNotHasKey('headers', $card['remotes'][0]);
+        self::assertIsString(json_encode($card));
+    }
 }

@@ -105,6 +105,28 @@
     </card>
 
     <card>
+        <title>MCP server for AI assistants</title>
+        <title lang="de-DE">MCP-Server für KI-Assistenten</title>
+
+        <input-field type="bool">
+            <name>shopMcpEnabled</name>
+            <label lang="de-DE">xl0g-MCP-Server auf diesem Shop anbieten</label>
+            <label lang="en-GB">Offer the xl0g MCP server on this shop</label>
+            <defaultValue>false</defaultValue>
+            <helpText lang="de-DE">Stellt unter https://&lt;shop&gt;/mcp einen MCP-Server ohne Schlüssel bereit, den xl0g für diesen Mandanten beantwortet (nur Liefertermin und Produktbeschreibung), dazu die Server-Card unter /.well-known/mcp/server-card.json und die Nennung in llms.txt. Braucht den Schlüssel darunter.</helpText>
+            <helpText lang="en-GB">Serves an MCP server at https://&lt;shop&gt;/mcp that needs no API key from the caller and is answered by xl0g for this tenant (delivery date and product description only), plus the server card at /.well-known/mcp/server-card.json and a line in llms.txt. Requires the key below.</helpText>
+        </input-field>
+
+        <input-field type="password">
+            <name>shopMcpApiKey</name>
+            <label lang="de-DE">API-Schlüssel für den Shop-MCP</label>
+            <label lang="en-GB">API key for the shop MCP</label>
+            <helpText lang="de-DE">Eigener xl0g-Schlüssel nur mit der Berechtigung „mcp:public“ (im xl0g-Dashboard: Einstellungen → API-Schlüssel → „Shop-MCP“). Wird server-seitig gehalten; der Schlüssel des Aufrufers wird nie weitergereicht.</helpText>
+            <helpText lang="en-GB">A separate xl0g key with the "mcp:public" permission only (in the xl0g dashboard: Settings → API keys → "Shop MCP"). Kept server-side; a caller's own key is never forwarded.</helpText>
+        </input-field>
+    </card>
+
+    <card>
         <title>International delivery times</title>
         <title lang="de-DE">Internationale Lieferzeiten</title>
 

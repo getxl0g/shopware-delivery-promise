@@ -62,6 +62,20 @@
             </call>
         </service>
 
+        <!-- The shop's MCP server (POST /mcp, answered by xl0g for the tenant): config, forwarding with the shop-side key,
+             filter to the public tools, per-address limit in the object cache. -->
+        <service id="Xl0g\DeliveryPromise\Service\ShopMcpProxy">
+            <argument key="$cache" type="service" id="cache.object"/>
+            <tag name="monolog.logger" channel="xl0g_delivery_promise"/>
+        </service>
+
+        <!-- MCP controller (POST /mcp + /.well-known/mcp/server-card.json). -->
+        <service id="Xl0g\DeliveryPromise\Storefront\Controller\McpController" public="true">
+            <call method="setContainer">
+                <argument type="service" id="service_container"/>
+            </call>
+        </service>
+
         <!-- Discovery controller (llms.txt + /.well-known/xl0g-delivery.json). -->
         <service id="Xl0g\DeliveryPromise\Storefront\Controller\DiscoveryController" public="true">
             <call method="setContainer">

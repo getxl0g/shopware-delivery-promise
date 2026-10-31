@@ -89,14 +89,63 @@ class AgentDiscoveryBuilder
     }
 
     /**
+     * The tenant's MCP server lives at `{tenant}/mcp` — the API base URL is `{tenant}/api`, so the last path segment
+     * is swapped. Returns null — so nothing is listed and the shop MCP is not offered — if the base URL is empty, not
+     * http(s), carries a query/fragment/whitespace, or does not end in `/api`.
+     */
+    public static function mcpUrlFromApiBase(string $apiBaseUrl): ?string
+    {
+        $base = rtrim(trim($apiBaseUrl), '/');
+
+        if (1 !== preg_match('#^https?://[^\s?\#]+/api$#i', $base)) {
+            return null;
+        }
+
+        return substr($base, 0, -4) . '/mcp';
+    }
+
+    private const MCP_TOOLS = ['delivery_date', 'product_details'];
+
+    private const MCP_NOTE = 'MCP server of this shop (Model Context Protocol, streamable-http, no API key needed): '
+        . 'tools delivery_date (expected delivery date for a product number) and product_details (what the product '
+        . 'solves, what it can do, its limits and audience), answered by xl0g for this shop. Protocol versions 2025-06-18 '
+        . 'and 2026-07-28.';
+
+    /**
+     * The MCP server card of the shop ({@see https://modelcontextprotocol.io} server card schema): one remote without
+     * variables and without headers — an assistant can connect as it is.
+     *
+     * @return array<string, mixed>
+     */
+    public function serverCard(string $shopUrl, string $mcpUrl): array
+    {
+        $host = (string) parse_url($shopUrl, \PHP_URL_HOST);
+
+        return [
+            '$schema' => 'https://static.modelcontextprotocol.io/schemas/v1/server-card.schema.json',
+            'name' => 'com.xl0g.shop/' . ($host !== '' ? $host : 'delivery'),
+            'version' => '1.0.0',
+            'title' => ($host !== '' ? $host . ' — ' : '') . 'delivery date and product details (powered by xl0g)',
+            'description' => self::MCP_NOTE,
+            'websiteUrl' => $shopUrl . '/',
+            'remotes' => [[
+                'type' => 'streamable-http',
+                'url' => $mcpUrl,
+                'supportedProtocolVersions' => ['2026-07-28', '2025-06-18'],
+            ]],
+        ];
+    }
+
+    /**
      * @param bool        $jsonLdEnabled whether the plugin writes JSON-LD for the sales channel (switch on AND configured)
      * @param string|null $feedUrl       public product feed address; null = not known, not listed
      * @param bool        $widgetOnPage  the visible delivery promise is on for the product page of the sales channel
      *                                   (`deliveryPromiseProductPage` on AND connection configured)
+     * @param string|null $mcpUrl        address of the shop's MCP server; null = not offered, not listed
      *
      * @return array<string, mixed>
      */
-    public function manifest(string $shopUrl, bool $jsonLdEnabled, bool $coreJsonLd, ?string $feedUrl = null, bool $widgetOnPage = false): array
+    public function manifest(string $shopUrl, bool $jsonLdEnabled, bool $coreJsonLd, ?string $feedUrl = null, bool $widgetOnPage = false, ?string $mcpUrl = null): array
     {
         $manifest = [
             'protocol' => 'xl0g-agent-discovery',
@@ -144,6 +193,16 @@ class AgentDiscoveryBuilder
             ];
         }
 
+        if (null !== $mcpUrl && '' !== $mcpUrl) {
+            $manifest['mcp'] = [
+                'url' => $mcpUrl,
+                'transport' => 'streamable-http',
+                'server_card' => $shopUrl . '/.well-known/mcp/server-card.json',
+                'tools' => self::MCP_TOOLS,
+                'description' => self::MCP_NOTE,
+            ];
+        }
+
         return $manifest;
     }
 
@@ -152,8 +211,9 @@ class AgentDiscoveryBuilder
      * @param string|null $feedUrl       public product feed address; null = not known, not listed
      * @param bool        $widgetOnPage  the visible delivery promise is on for the product page of the sales channel
      *                                   (`deliveryPromiseProductPage` on AND connection configured)
+     * @param string|null $mcpUrl        address of the shop's MCP server; null = not offered, not listed
      */
-    public function llmsTxt(string $shopUrl, bool $jsonLdEnabled, bool $coreJsonLd, ?string $feedUrl = null, bool $widgetOnPage = false): string
+    public function llmsTxt(string $shopUrl, bool $jsonLdEnabled, bool $coreJsonLd, ?string $feedUrl = null, bool $widgetOnPage = false, ?string $mcpUrl = null): string
     {
         $lines = [
             '# Delivery intelligence (powered by xl0g)',
@@ -199,6 +259,12 @@ class AgentDiscoveryBuilder
         if (null !== $feedUrl && '' !== $feedUrl) {
             $lines[] = '- ' . self::FEED_DESCRIPTION . ': ' . $feedUrl;
             $lines[] = '  ' . self::FEED_FIELDS_NOTE;
+        }
+
+        if (null !== $mcpUrl && '' !== $mcpUrl) {
+            $lines[] = '- MCP server (no API key needed): ' . $mcpUrl;
+            $lines[] = '  ' . self::MCP_NOTE;
+            $lines[] = '  Server card: ' . $shopUrl . '/.well-known/mcp/server-card.json';
         }
 
         $lines[] = '- Agent discovery manifest: ' . $shopUrl . '/.well-known/xl0g-delivery.json';
