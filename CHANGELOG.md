@@ -2,11 +2,11 @@
 
 All notable changes to this plugin. Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
+## [0.8.1] — 2026-11-03 — New plugin icon
 
 - **New plugin icon.** `plugin.png` and `plugin.svg` now carry the xl0g brand mark "Dreiklang": the carton cube opened
   into its three faces, each embossed with one capability — the delivery date (top), packaging (left) and content
-  (right, in amber). Replaces the green zero on anthracite. No code change.
+  (right, in amber). Replaces the green zero on anthracite. No code change; 0.8.0 is the last release with the old icon.
 
 ## [0.8.0] — 2026-10-31 — The shop has its own MCP server, answered by xl0g
 
