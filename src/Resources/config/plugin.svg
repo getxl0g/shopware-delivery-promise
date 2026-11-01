@@ -1,9 +1,25 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <!-- Brand mark: a single "0" as the recognition sign, emerald on a neutral anthracite square.
-       Works as favicon and app icon, stays legible on light/dark backgrounds. -->
+  <!-- xl0g brand mark: the carton cube opened into its three faces. Top: the delivery date (date tile with check),
+       left: packaging (parcel with tape), right: content (text lines with a spark) in amber. Source of plugin.png. -->
+  <defs>
+  <linearGradient id="gTop" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6ee7b7"/><stop offset="1" stop-color="#34d399"/></linearGradient>
+  <linearGradient id="gLeft" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#10b981"/><stop offset="1" stop-color="#059669"/></linearGradient>
+  <linearGradient id="gRight" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#059669"/><stop offset="1" stop-color="#047857"/></linearGradient>
+  <linearGradient id="gAmber" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbbf24"/><stop offset="1" stop-color="#d97706"/></linearGradient>
+  <radialGradient id="glow" cx=".5" cy=".9" r=".7"><stop offset="0" stop-color="#34d399" stop-opacity=".22"/><stop offset="1" stop-color="#34d399" stop-opacity="0"/></radialGradient>
+</defs>
   <rect width="64" height="64" rx="12" fill="#0B0F14"/>
-  <text x="32" y="48" text-anchor="middle"
-        font-family="Inter, system-ui, sans-serif"
-        font-weight="800" font-size="48" letter-spacing="-0.04em"
-        fill="#10b981">0</text>
+  <rect width="64" height="64" rx="12" fill="url(#glow)"/>
+  <polygon points="32,9.6 50.19,20.1 32,30.6 13.81,20.1" fill="url(#gTop)" stroke="#0B0F14" stroke-width="1.2" stroke-linejoin="round"/>
+  <polygon points="11.74,44.7 29.92,55.2 29.92,34.2 11.74,23.7" fill="url(#gLeft)" stroke="#0B0F14" stroke-width="1.2" stroke-linejoin="round"/>
+  <polygon points="52.26,44.7 34.08,55.2 34.08,34.2 52.26,23.7" fill="url(#gAmber)" stroke="#0B0F14" stroke-width="1.2" stroke-linejoin="round"/>
+  <polygon points="32,14.1 42.39,20.1 32,26.1 21.61,20.1" fill="none" stroke-linejoin="round" stroke-linecap="round" stroke="#ffffff" stroke-opacity=".32" stroke-width="1.6"/>
+  <polygon points="32,14.1 42.39,20.1 40.44,21.23 30.05,15.23" fill="#ffffff" fill-opacity=".22"/>
+  <path d="M28.1 18.85 L28.1 21.6 L37.2 21.1" fill="none" stroke-linejoin="round" stroke-linecap="round" stroke="#ffffff" stroke-opacity=".32" stroke-width="2.2"/>
+  <polygon points="15.63,42.45 26.02,48.45 26.02,36.45 15.63,30.45" fill="none" stroke-linejoin="round" stroke-linecap="round" stroke="#ffffff" stroke-opacity=".32" stroke-width="1.6"/>
+  <polygon points="19.53,44.7 22.13,46.2 22.13,34.2 19.53,32.7" fill="#ffffff" fill-opacity=".22"/>
+  <path d="M47.93 32.7 L38.41 38.2" fill="none" stroke-linejoin="round" stroke-linecap="round" stroke="#ffffff" stroke-opacity=".32" stroke-width="1.6"/>
+  <path d="M47.93 35.7 L41.01 39.7" fill="none" stroke-linejoin="round" stroke-linecap="round" stroke="#ffffff" stroke-opacity=".32" stroke-width="1.6"/>
+  <path d="M47.93 38.7 L42.74 41.7" fill="none" stroke-linejoin="round" stroke-linecap="round" stroke="#ffffff" stroke-opacity=".32" stroke-width="1.6"/>
+  <path d="M37.98 37.45 l0 -4.2 M37.98 37.45 l0 4.2 M37.98 37.45 l-3.2 -1.8 M37.98 37.45 l3.2 1.8" fill="none" stroke-linejoin="round" stroke-linecap="round" stroke="#ffffff" stroke-opacity=".32" stroke-width="1.3"/>
 </svg>

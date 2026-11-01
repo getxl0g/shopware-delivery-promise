@@ -2,6 +2,12 @@
 
 All notable changes to this plugin. Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+
+- **New plugin icon.** `plugin.png` and `plugin.svg` now carry the xl0g brand mark "Dreiklang": the carton cube opened
+  into its three faces, each embossed with one capability — the delivery date (top), packaging (left) and content
+  (right, in amber). Replaces the green zero on anthracite. No code change.
+
 ## [0.8.0] — 2026-10-31 — The shop has its own MCP server, answered by xl0g
 
 - **`POST /mcp` on the shop domain: an MCP server for AI assistants that needs no API key from the caller.** The plugin
