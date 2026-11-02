@@ -30,13 +30,14 @@ At the top of the config dialog **choose the channel**, then per channel:
   - PDP: the delivery promise appears below the buy box.
   - JSON-LD: the source contains `application/ld+json` with `OfferShippingDetails` → **Google’s Rich Results Test**.
   - Load `https://<shop>/llms.txt` + `/.well-known/xl0g-delivery.json`.
-- **Fail-safe by design:** wrong key, xl0g unreachable or no date → the widget **hides itself** (no broken widget,
-  no blocked page build). An empty widget means check config/reachability, **not** a shop error.
+- **Fail-safe by design:** wrong key, xl0g unreachable or no date → the shop shows **Shopware's own delivery time** if
+  one is maintained, otherwise the widget stays hidden (no broken widget, no blocked page build). A missing xl0g date
+  means check config/reachability, **not** a shop error.
 
 ## 3 · Monitoring (good practice)
 - **Visual check**: is the widget there on a real PDP? Is the JSON-LD valid (Rich Results Test)?
 - **xl0g API health**: the plugin depends on the xl0g promise API. Slow (more than 2 s) or down → the shop shows
-  Shopware's own delivery time instead, **silently** (connect timeout 1.5 s, total 2 s, error swallowed; a failure is
+  Shopware's own delivery time if one is maintained (otherwise nothing), **silently** (connect timeout 1.5 s, total 2 s, error swallowed; a failure is
   cached for 90 s). That is why **the xl0g side should be monitored too**.
 - **Google Search Console**: watch `shippingDetails`/shipping rich results + structure errors.
 - **Shopware log**: since the plugin deliberately swallows errors (fail-safe), to debug check the response of
@@ -59,7 +60,7 @@ Development/tests: [DEVELOPMENT.md](DEVELOPMENT.md) · Rollout: [INSTALLATION.md
 **Source:** this repository. Every version is a tag (`v0.7.0` …) with a release and the ZIP
 `Xl0gDeliveryPromise-<version>.zip` (built with `git archive --prefix=Xl0gDeliveryPromise/`).
 
-**Recommended: Composer.** The shop pulls in `"xl0g/shopware-delivery-promise": "^0.7"` from this repository (see
+**Recommended: Composer.** The shop pulls in `"xl0g/shopware-delivery-promise": "^0.8"` from this repository (see
 [INSTALLATION.md](INSTALLATION.md)). Every compatible version arrives with the shop’s next deploy — through the same
 route the shop is delivered by anyway, with `plugin:update`, storefront build and cache clear. Anyone who wants more
 automation has Renovate or Dependabot open a merge request per release.

@@ -33,7 +33,7 @@ xl0g dashboard, without a trailing slash.
 
 ```sh
 composer config repositories.xl0g vcs https://github.com/getxl0g/shopware-delivery-promise
-composer require xl0g/shopware-delivery-promise:^0.7
+composer require xl0g/shopware-delivery-promise:^0.8
 bin/console plugin:refresh
 bin/console plugin:install --activate Xl0gDeliveryPromise
 bin/build-storefront.sh
